@@ -187,9 +187,14 @@ function _SteadyState(;
   )
 
   if fespaces[:current_disc] == :H1
-    params[:bcs][:φ] = Dict(
-      :tags=>tags_φ
-      )
+    if isempty(tags_φ)
+      params[:bcs][:φ] = Dict(:tags=>[])
+      params[:fespaces][:φ_constrain] = :zeromean
+    else
+      params[:bcs][:φ] = Dict(
+        :tags=>tags_φ
+        )
+    end
   end
 
 """
