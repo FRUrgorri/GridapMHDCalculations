@@ -1,9 +1,9 @@
-#Post processing functions for the SteadyState driver
+#Post processing functions
 
 """
 post_process(args)
 
-Most basic postprocess function, it only generates the cell fields and write them in paraview
+Most basic postprocess function, it generates the cell fields and write them in a vtk file for paraview
 
 #Arguments
 
@@ -15,25 +15,18 @@ Most basic postprocess function, it only generates the cell fields and write the
 
 """
 
-function post_process(xh, Ω, B, path, title; order=2)
+function post_process_basic(xh, Ω, B, path, title; order=2)
   if length(xh) == 4
-    cellfields = _post_process_4fields(xh, Ω, B)
+    uh, ph, jh, φh = xh[1], xh[2], xh[3], xh[4]
   elseif length(xh) == 3
-    cellfields = _post_process_3fields(xh, Ω, B)
-  else
-    error("post_process expects 3 or 4 fields, got $(length(xh))")
+    uh, ph, φh = xh[1], xh[2], xh[3]
+    jh =  ∇·φh + uh×B  
   end
-  writevtk(Ω, joinpath(path, title), order=order, cellfields=cellfields)
-  nothing
-end
 
-function _post_process_4fields(xh, Ω, B)
-  uh, ph, jh, φh = xh[1], xh[2], xh[3], xh[4]
- 
   div_jh = ∇·jh
   div_uh = ∇·uh
   grad_p = ∇·ph
-  
+
   cellfields=[
     "uh"=>uh,
     "ph"=>ph,
@@ -44,19 +37,8 @@ function _post_process_4fields(xh, Ω, B)
     "grad_p"=>grad_p,
     "B" => CellField(B, Ω)
   ]
+
+  writevtk(Ω, joinpath(path, title), order=order, cellfields=cellfields)
+  nothing
 end
 
-function _post_process_3fields(xh, Ω, B)
-  uh, ph, φh = xh[1], xh[2], xh[3]
-  div_uh = ∇·uh
-  grad_p = ∇·ph
-  
-  cellfields=[
-    "uh"=>uh,
-    "ph"=>ph,
-    "phi"=>φh,
-    "div_uh"=>div_uh,
-    "grad_p"=>grad_p,
-    "B" => CellField(B, Ω)
-  ]
-end
