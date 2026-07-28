@@ -53,9 +53,9 @@ solver_direct = Dict(
 
 #Call the steady state driver
 
-xh,Ω = SteadyState(;
+SteadyState(;
   title = "channel_test",
-  path = "./results",
+  path = "./results_test",
 #  backend = :sequential,
 #  np = (2, 2, 1),
   modelGen = Model,
@@ -68,7 +68,9 @@ xh,Ω = SteadyState(;
   solver = :julia,
   convection = :newton,
   fespaces = Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :H1),
+  post_process = GridapMHDCalculations.post_process_basic,
+  order_pp = 2,
 #  solve = false,
 )
 
-GridapMHDCalculations.post_process_basic(xh, Ω, B, "./results", "channel_test")
+#GridapMHDCalculations.post_process_basic(xh, Ω, B, "./results_test", "channel_test")

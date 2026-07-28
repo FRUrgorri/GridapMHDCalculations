@@ -20,8 +20,7 @@ Driver that solves an MHD inductionless problem in steady state.
 - `solve = true`: toggle to run the solver.
 - `solver = :julia`: solver to be used and additional solver parameters.
 - `verbose = true`: print time statistics.
-- `ku = 2`: order of the U FEM space (H). Pressure elements are of order ku-1 (L)
-- `kj = 1`: order of the J FEM space (RT). Potential elements are of order kj (H)
+- `fespaces = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT): Dictionay with the fe spaces options
 """
 function SteadyState(;
   backend = nothing,
@@ -36,16 +35,16 @@ function SteadyState(;
 #    _title = title*"_r$ir"
     if isa(backend,Nothing)
       @assert isa(np,Nothing)
-      info, t, xh, Ω = _SteadyState(;title=title,path=path,kwargs...)
+      info, t = _SteadyState(;title=title,path=path,kwargs...)
     else
       @assert backend ∈ [:sequential,:mpi]
       @assert !isa(np,Nothing)
       if backend === :sequential
-        info, t, xh, Ω = with_debug() do distribute
+        info, t = with_debug() do distribute
           _SteadyState(;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
         end
       else
-        info,t, xh, Ω  = with_mpi() do distribute
+        info,t = with_mpi() do distribute
           _SteadyState(;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
         end
       end
@@ -58,11 +57,11 @@ function SteadyState(;
       for (k,v) in data
         info[Symbol("time_$k")] = v.max
       end
-      save(joinpath(path,"$title.bson"),info)
+      save(joinpath(path,"$_title.bson"),info)
     end
   end
 
-  return xh, Ω
+  return nothing
 end
 
 function _SteadyState(;
@@ -86,6 +85,8 @@ function _SteadyState(;
   source = VectorValue(0.0, 0.0, 0.0),
 #  μ = 0.0,
   fespaces = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
+  post_process = nothing,
+  kwargs_pp...
 )
 
   info = Dict{Symbol,Any}()
@@ -219,6 +220,14 @@ TBD: Allow a more general stabilization (at least a bit)
     end
   end
 
+  #Post process functions
+  if isnothing(post_process)
+    println("No postprocess actions")
+  else
+    exec_post_process(post_process; kwargs_pp...)(xh, Ω, Bfield, path, title; kwargs_pp...)
+    toc!(t,"post_process")
+  end
+
   t = fullparams[:ptimer]
 
   if verbose
@@ -250,6 +259,6 @@ TBD: Allow a more general stabilization (at least a bit)
   
 #  info[:μ] = μ
 
-  return info, t, xh, Ω 
+  return info, t 
 end
 

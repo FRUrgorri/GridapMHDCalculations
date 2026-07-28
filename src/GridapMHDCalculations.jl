@@ -1,5 +1,6 @@
 module GridapMHDCalculations
 
+using Revise
 
 include("../../master/GridapMHD.jl/src/GridapMHD.jl")
 using .GridapMHD: main, default_solver_params, uses_petsc     #.GridapMHD = GridapMHDCalculations.GridapMHD
@@ -29,6 +30,8 @@ export SteadyState
 
 include("MagneticFields.jl")
 include("PostProcess.jl")
+export exec_post_process
+
 include("utils.jl")
 
 end # module GridapMHDCalculations
