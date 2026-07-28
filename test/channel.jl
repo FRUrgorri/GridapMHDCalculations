@@ -67,8 +67,8 @@ xh,Ω = SteadyState(;
   mesh2vtk = false,
   solver = :julia,
   convection = :newton,
-  fespaces = Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
+  fespaces = Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :H1),
 #  solve = false,
 )
 
-GridapMHDCalculations.post_process(xh, Ω, B, "./results", "channel_test")
+GridapMHDCalculations.post_process_basic(xh, Ω, B, "./results", "channel_test")
