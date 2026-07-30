@@ -10,12 +10,14 @@
 -`b: channel aspect ratio
 -`L: channel lenght
 -`mesh_map = mesh map function
+-`cw : wall conductance ratio (>100 --> perfect conductor)
 
 """
 function channel_model(nc::Tuple{Int64,Int64,Int64};
     b = 1,
     L = 2,
-    mesh_map = nothing
+    mesh_map = nothing,
+    cw = 0
     )
     
     domain = (-b, b, -1.0, 1.0, 0.0, L)
@@ -32,12 +34,23 @@ function channel_model(nc::Tuple{Int64,Int64,Int64};
     tags_insulated = append!(collect(1:20), [23, 24, 25, 26])
     add_tag_from_tags!(labels, "inlet", tags_inlet)
     add_tag_from_tags!(labels, "outlet", tags_outlet)
-    add_tag_from_tags!(labels, "insulated", tags_insulated)
+    
+    if iszero(cw)
+    	add_tag_from_tags!(labels, "insulated", tags_insulated)
 	
-    #Neumann tags are the default, so there is no need to specified "outlet" as Neumann for example 
-    Dirichlet_Utags=["inlet","insulated"]
-    Dirichlet_Jtags=["inlet","outlet","insulated"]
-    Dirichlet_φtags=[]
+    	#Neumann tags are the default, so there is no need to specified "outlet" as Neumann for example 
+    	Dirichlet_Utags=["inlet","insulated"]
+    	Dirichlet_Jtags=["inlet","outlet","insulated"]
+    	Dirichlet_φtags=[]
+    elseif cw > 100 
+    	add_tag_from_tags!(labels, "conducting", tags_insulated)
+	Dirichlet_Utags=["inlet","conducting"]
+        Dirichlet_Jtags=["inlet","outlet"]
+        Dirichlet_φtags=["conducting"]
+    else
+    	error("Thin wall BC not implemented in the SteadyState driver yet")
+    end
+
 
     model, Dirichlet_Utags, Dirichlet_Jtags, Dirichlet_φtags
     end
