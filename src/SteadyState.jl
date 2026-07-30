@@ -57,7 +57,7 @@ function SteadyState(;
       for (k,v) in data
         info[Symbol("time_$k")] = v.max
       end
-      save(joinpath(path,"$_title.bson"),info)
+      save(joinpath(path,"$title.bson"),info)
     end
   end
 
