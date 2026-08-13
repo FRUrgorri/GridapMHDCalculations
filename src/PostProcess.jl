@@ -50,7 +50,8 @@ function _post_process_4fields(xh, Ω, B)
   div_jh = ∇·jh
   div_uh = ∇·uh
   grad_p = ∇·ph
-  
+  grad_phi = ∇·φh
+
   cellfields=[
     "uh"=>uh,
     "ph"=>ph,
@@ -59,16 +60,19 @@ function _post_process_4fields(xh, Ω, B)
     "div_uh"=>div_uh,
     "div_jh"=>div_jh,
     "grad_p"=>grad_p,
+    "grad_phi" =>grad_phi,
     "B" => CellField(B, Ω)
   ]
 end
 
 function _post_process_3fields(xh, Ω, B)
   uh, ph, φh = xh[1], xh[2], xh[3]
+  
   div_uh = ∇·uh
   grad_p = ∇·ph
-  
-  jh = ∇·φh + uh×B
+  grad_phi = ∇·φh
+
+  jh = uh×B - grad_phi 
 #  div_jh = ∇·jh
   
   cellfields=[
@@ -77,8 +81,9 @@ function _post_process_3fields(xh, Ω, B)
     "phi"=>φh,
     "div_uh"=>div_uh,
     "grad_p"=>grad_p,
+    "grad_phi"=>grad_phi,
     "B" => CellField(B, Ω),
     "jh" => jh,
-#    "div_jh"=>div_jh,  #Error TBS
+#    "div_jh"=>div_jh,  # TBS: Unknown error when writting 
   ]
 end

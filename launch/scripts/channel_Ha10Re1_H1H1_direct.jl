@@ -67,8 +67,8 @@ solver_direct = Dict(
 
 solver_blocks = Dict(
     :solver => :h1h1blocks,
-    :matrix_type    => SparseMatrixCSR{0,PetscScalar,PetscInt},
-    :vector_type    => Vector{PetscScalar},
+    :matrix_type    => SparseMatrixCSR{Float64,Int},
+    :vector_type    => Vector{Float64},
     :block_solvers  => [:petsc_mumps, :petsc_cg_jacobi, :petsc_gmres_amg],
     :petsc_options  => "-snes_monitor -ksp_error_if_not_converged true -ksp_converged_reason",
     )
