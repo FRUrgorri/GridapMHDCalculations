@@ -50,6 +50,8 @@ solver_direct = Dict(
     ),
 )
 """
+#Define the FE spaces parameters
+FE_spaces=Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :H1)
 
 #Call the steady state driver
 
@@ -67,9 +69,9 @@ SteadyState(;
   mesh2vtk = false,
   solver = :julia,
   convection = :newton,
-  fespaces = Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :H1),
+  fespaces = FE_spaces,
   post_process = GridapMHDCalculations.post_process_basic,
-  order_pp = 2,
+  order_pp = max(FE_spaces[:order_u],FE_spaces[:order_j]),
 #  solve = false,
 )
 
