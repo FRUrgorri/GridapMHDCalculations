@@ -99,7 +99,7 @@ function _SteadyState(;
 
   # Communicator
   if isa(distribute,Nothing)
-    @assert isa(rank_partition,Nothing)
+    @assert isa(rank_partition,Nothing)   "Attempt to perform a serial calculations but partition tupple is given"
     rank_partition = Tuple(fill(1,3))     #Always 3D problems (even FD are computationally 3D)
     distribute = DebugArray
   end
@@ -134,9 +134,13 @@ function _SteadyState(;
   
   #Model from the input  function
   
-  @assert !isa(modelGen,Nothing)
-  model, tags_u, tags_j, tags_φ = modelGen(parts,rank_partition)
+  @assert !isa(modelGen,Nothing)  "modelGen funtion not provided"
+  model, tags, multigrid = modelGen(parts,rank_partition)
   
+  tags_u, tags_j, tags_φ = tags 
+
+  params[:multigrid] = multigrid #Ignored in single grid case
+
   params[:model] = model
   Ω = Interior(model)
 
