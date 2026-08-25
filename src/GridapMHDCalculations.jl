@@ -3,7 +3,7 @@ module GridapMHDCalculations
 using Revise
 
 include("../../master/GridapMHD.jl/src/GridapMHD.jl")
-using .GridapMHD: main, default_solver_params, uses_petsc     #.GridapMHD = GridapMHDCalculations.GridapMHD
+using .GridapMHD: main, default_solver_params, uses_petsc     #.GridapMHD = GridapMHDCalculations.GridapMHD This is necessary to get the exports from GridapMHD
 
 using PartitionedArrays
 using SparseArrays
