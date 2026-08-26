@@ -2,7 +2,7 @@ module GridapMHDCalculations
 
 using Revise
 
-include("../../master/GridapMHD.jl/src/GridapMHD.jl")
+include("../../master/GridapMHD.jl/src/GridapMHD.jl")       #TDB: Add a global path or something along those lines
 using .GridapMHD: main, default_solver_params, uses_petsc     #.GridapMHD = GridapMHDCalculations.GridapMHD This is necessary to get the exports from GridapMHD
 
 using PartitionedArrays
@@ -33,5 +33,7 @@ include("PostProcess.jl")
 export exec_post_process
 
 include("utils.jl")
+
+include("../test/serial/serialTest.jl")
 
 end # module GridapMHDCalculations

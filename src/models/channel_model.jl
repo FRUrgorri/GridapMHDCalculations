@@ -25,7 +25,7 @@ function channel_model(nc::NTuple{3,<:Integer};
         
     model=CartesianDiscreteModel(parts, rank_partition, domain, nc; map=mesh_map)
   
-    tags = collect_channel_tags(model;cw=cw)
+    tags = add_channel_tags!(model;cw=cw)
 
     model, tags, Nothing
     end
