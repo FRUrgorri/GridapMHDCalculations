@@ -31,7 +31,7 @@ Arguments:
 * `α`: distance to `x₀` where the field magnitude is half its maximum.
 * `β`: changes the _flatness_ of the plateau around the maximum value.
 """
-function B_tanh_MaPLE(x₀, α, β)
+function B_tanh_MaPLE(x₀::Real, α::Real, β::Real)
   _B(x) = 0.5*(1 - tanh((abs(x - x₀) - α)/β)) 
 
   return _B
@@ -42,7 +42,7 @@ end
 
 Return an axially varying magnetic field that follows a parametrized `arctan` function.
 """
-function B_arctan(x₀, α, β, γ)
+function B_arctan(x₀::Real, α::Real, β::Real, γ::Real)
   _B(x) = (1 + α*atan(γ*(β - abs(x - x₀))))/(1 + α*atan(γ*β))
 
   return _B
@@ -52,11 +52,11 @@ end
 
 Implicit field defined in R.Moreau et al. (2010) PMC Physics B 3(1):3 
 """
-function B_Moreau(z₀)
+function B_Moreau(z₀::Real)
 
-  f(z) = β -> 3*(1-β[1])/(1+β[1]) - exp(4-2/β[1]-(z-z₀)*π)
+  f(z::Real) = β::Real -> 3*(1-β[1])/(1+β[1]) - exp(4-2/β[1]-(z-z₀)*π)
 
-  _B(z)=nlsolve(f(z),[0.01]).zero[1]
+  _B(z::Real)=nlsolve(f(z),[0.01]).zero[1]
 
  return _B
 end
@@ -70,13 +70,13 @@ for a magnetic field consistent with real fields [1].
 
 [1]: X. Albets-Chico et al. (2011), Fusion Eng. Des. 86(1), 5-14.
 """
-function curl_free_B(B)
+function curl_free_B(B::Union{Real,Function})
   dB(x) = ForwardDiff.derivative(B, x)
   d²B(x) = ForwardDiff.derivative(dB, x)
   d³B(x) = ForwardDiff.derivative(d²B, x)
   d⁴B(x) = ForwardDiff.derivative(d³B, x)
 
-  function _curl_free_B(x)
+  function _curl_free_B(x::Real)
     B₁ = 0.0
     B₂ = B(x[3]) - d²B(x[3])*x[2]^2/2 + d⁴B(x[3])*x[2]^4/24
     B₃ = dB(x[3])*x[2] - d³B(x[3])*x[2]^3/6

@@ -5,11 +5,11 @@ using Gridap
 function Run_test_channel(;
     b::Real = 1.0,         #Channel aspect ratio
     L::Real = 4.0,         #Channel lenght ratio
-    Ha::Real = 1,         #Hartmann number
+    Ha::Real = 10,         #Hartmann number
     Re::Real = 1,          #Reynolds number
-    nX::Integer = 12,       #Mesh cells X direction
-    nY::Integer = 12,       #Mesh cells Y direction
-    nZ::Integer = 24,       #Mesh cells Z direction
+    nX::Integer = 6,       #Mesh cells X direction
+    nY::Integer = 6,       #Mesh cells Y direction
+    nZ::Integer = 12,       #Mesh cells Z direction
   )
 
   #Define the boundary fields

@@ -12,8 +12,8 @@ Post process function selector (see SteadyState.jl for the execution example)
 
 """
 
-function exec_post_process(pp_function; kargs...)
- (xh, Ω, B, path, title; kargs...)->pp_function(xh, Ω, B, path, title;kargs...)
+function exec_post_process(pp_function::Function; kargs...)
+ (xh, Ω, B, path::String, title::String; kargs...)->pp_function(xh, Ω, B, path, title; kargs...)
 end
 
 
@@ -32,7 +32,7 @@ Most basic postprocess function, it generates the cell fields and write them in 
 
 """
 
-function post_process_basic(xh, Ω, B, path, title; order_pp=2)
+function post_process_basic(xh, Ω, B, path::String, title::String; order_pp::Integer=2) #TBD: Type specification of cell fields and Interior
   if length(xh) == 4
     cellfields = _post_process_4fields(xh, Ω, B)
   elseif length(xh) == 3
