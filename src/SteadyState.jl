@@ -21,13 +21,15 @@ Driver that solves an MHD inductionless problem in steady state.
 - `solver = :julia`: solver to be used and additional solver parameters.
 - `verbose = true`: print time statistics.
 - `fespaces = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT): Dictionay with the fe spaces options
+- `μ_BC::Real = 2.0`: Penalty factor of the no slip BC in the HdivH1 and HdivHdiv formulations
+- `ζ::Real = 0.0`: Augmented Lagrangian factor for the iterative solver
 """
 function SteadyState(;
-  backend = nothing,
-  np = nothing,
-  title = "MHD_SS",
+  backend::Union{Nothing,Symbol} = nothing,
+  np::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,
+  title::String = "MHD_SS",
 #  nruns = 1,  #There is no interest a priory to repeate the same computation more than once (other than sudy scalability)
-  path = ".",
+  path::String = ".",
   kwargs...
 )
 
@@ -65,27 +67,29 @@ function SteadyState(;
 end
 
 function _SteadyState(;
-  title = "MHD_SS",
-  path = ".",
-  distribute = nothing,
-  rank_partition = nothing,
-  modelGen = nothing,              
+  title::String = "MHD_SS",
+  path::String = ".",
+  distribute::Union{Nothing,AbstractVector} = nothing,
+  rank_partition::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,
+  modelGen::Union{Nothing,Function} = nothing,              
 #  domain_tags = ("fluid",),           
-  normalization = :mhd,                 
-  Ha = 10.0,
-  Re = 1.0,
-  N = nothing,
-  convection = :newton,
-  Bfield = VectorValue(0.0,1.0,0.0),  
-  u_inlet = VectorValue(0.0,0.0,1.0), 
-  solve = true,
-  solver = :julia,
-  verbose = true,
-  mesh2vtk = false,
-  source = VectorValue(0.0, 0.0, 0.0),
+  normalization::Symbol = :mhd,                 
+  Ha::Union{Nothing,Real} = 10.0,
+  Re::Union{Nothing,Real} = 1.0,
+  N::Union{Nothing,Real} = nothing,
+  convection::Symbol = :newton,
+  Bfield::Union{Function,VectorValue{3,Float64}} = VectorValue(0.0,1.0,0.0),  
+  u_inlet::Union{Function,VectorValue{3,Float64}} = VectorValue(0.0,0.0,1.0), 
+  solve::Bool = true,
+  solver::Symbol = :julia,
+  verbose::Bool = true,
+  mesh2vtk::Bool = false,
+  source::VectorValue{3,Float64} = VectorValue(0.0, 0.0, 0.0),
 #  μ = 0.0,
-  fespaces = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
-  post_process = nothing,
+  μ_BC::Real = 2.0,
+  ζ::Real = 0.0,
+  fespaces::Dict{Symbol, Any} = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
+  post_process::Union{Nothing,Function} = nothing,
   kwargs_pp...
 )
 
@@ -158,9 +162,9 @@ function _SteadyState(;
     :γ=>γ,
     :f=>source,
     :B=>Bfield,
-    :ζᵤ => 0.0,
-    :ζⱼ => 0.0,
+    :ζᵤ => ζ,
     :convection=>convection,
+    :μ => μ_BC,
   )
    
  """ 
