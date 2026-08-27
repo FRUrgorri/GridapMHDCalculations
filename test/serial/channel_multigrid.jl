@@ -8,7 +8,7 @@ function Run_test_multigrid(;
     nZ::Integer = 24,         #Mesh cells Z direction
     nrefs::Integer = 2,       #Refinement factor
     levels::Integer = 2,      #Refinement levels
-    ζᵤ::Real = 10.0,          #Augmented Lagrangian
+    ζ::Real = 10.0,           #Augmented Lagrangian
     μ_BC::Real = 2.0,         #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
     map::Function = identity  #Mesh map function
     )
@@ -69,7 +69,7 @@ function Run_test_multigrid(;
         Bfield = B,
         u_inlet = U_inlet,
         source = VectorValue(0.0,0.0,0.0),
-        ζᵤ = ζᵤ,
+        ζᵤ = ζ,
         μ_BC = μ_BC,
         mesh2vtk = false,
         solver = solver_multigrid,
