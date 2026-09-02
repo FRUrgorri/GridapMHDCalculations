@@ -1,3 +1,5 @@
+using GridapMHDCalculations
+
 """
   SteadyState(; <keyword arguments>)
 
@@ -37,16 +39,16 @@ function SteadyState(;
 #    _title = title*"_r$ir"
     if isa(backend,Nothing)
       @assert isa(np,Nothing)
-      info, t = _SteadyState(;title=title,path=path,kwargs...)
+      info, t, pp_out = _SteadyState(;title=title,path=path,kwargs...)
     else
       @assert backend ∈ [:sequential,:mpi]
       @assert !isa(np,Nothing)
       if backend === :sequential
-        info, t = with_debug() do distribute
+        info, t, pp_out = with_debug() do distribute
           _SteadyState(;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
         end
       else
-        info,t = with_mpi() do distribute
+        info, t, pp_out = with_mpi() do distribute
           _SteadyState(;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
         end
       end
@@ -63,7 +65,7 @@ function SteadyState(;
     end
   end
 
-  return nothing
+  return pp_out
 end
 
 function _SteadyState(;
@@ -81,7 +83,7 @@ function _SteadyState(;
   Bfield::Union{Function,VectorValue{3,Float64}} = VectorValue(0.0,1.0,0.0),  
   u_inlet::Union{Function,VectorValue{3,Float64}} = VectorValue(0.0,0.0,1.0), 
   solve::Bool = true,
-  solver::Symbol = :julia,
+  solver::Union{Dict,Symbol} = :julia,
   verbose::Bool = true,
   mesh2vtk::Bool = false,
   source::VectorValue{3,Float64} = VectorValue(0.0, 0.0, 0.0),
@@ -90,7 +92,6 @@ function _SteadyState(;
   ζ::Real = 0.0,
   fespaces::Dict{Symbol, Any} = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
   post_process::Union{Nothing,Function} = nothing,
-  kwargs_pp...
 )
 
   info = Dict{Symbol,Any}()
@@ -227,12 +228,16 @@ TBD: Allow a more general stabilization (at least a bit)
       return xh,fullparams,info
     end
   end
+  
+  
 
   #Post process functions
   if isnothing(post_process)
     println("No postprocess actions")
   else
-    exec_post_process(post_process; kwargs_pp...)(xh, Ω, Bfield, path, title; kwargs_pp...)
+    #Construct the output_info and execute the selected postprocess function
+    outputs=output_info(xh,Ω,Bfield,path,title)
+    pp_out=exec_post_process(post_process)(outputs)
     toc!(t,"post_process")
   end
 
@@ -267,6 +272,6 @@ TBD: Allow a more general stabilization (at least a bit)
   
 #  info[:μ] = μ
 
-  return info, t 
+  return info, t, pp_out 
 end
 

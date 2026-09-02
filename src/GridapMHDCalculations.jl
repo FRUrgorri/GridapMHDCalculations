@@ -23,6 +23,9 @@ using GridapSolvers
 using FileIO
 using BSON
 
+include("Data.jl")
+export output_info
+
 include("models/models.jl")
 
 include("SteadyState.jl")
@@ -34,6 +37,7 @@ export exec_post_process
 
 include("utils.jl")
 
+#Tests
 include("../test/serial/serialTest.jl")
 
 end # module GridapMHDCalculations
