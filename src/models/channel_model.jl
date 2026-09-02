@@ -3,13 +3,14 @@
   
   Function that returns an anonym function function that generates a Gridap model and the tags for BC. 
   Arguments are the geometrical characteristics and mesh characteristics of a rectangular cross-sectional channel.
-#Arguments
 
--`nc: tuple of cells in each direction. 2D or 3D tuple selects a FD or 3D problem
--`b: channel aspect ratio
--`L: channel lenght
--`mesh_map = mesh map function
--`cw : wall conductance ratio (>100 --> perfect conductor)
+  #Arguments
+
+    -`nc: tuple of cells in each direction. 2D or 3D tuple selects a FD or 3D problem
+    -`b: channel aspect ratio
+    -`L: channel lenght
+    -`mesh_map = mesh map function
+    -`cw : wall conductance ratio (>100 --> perfect conductor)
 
 """
 function channel_model(nc::NTuple{3,<:Integer};
@@ -23,11 +24,11 @@ function channel_model(nc::NTuple{3,<:Integer};
     
     function (parts::AbstractVector{<:Integer},rank_partition::Union{<:Integer,NTuple{3,<:Integer}})  
         
-    model=CartesianDiscreteModel(parts, rank_partition, domain, nc; map=mesh_map)
+        model=CartesianDiscreteModel(parts, rank_partition, domain, nc; map=mesh_map)
   
-    tags = add_channel_tags!(model;cw=cw)
+        tags = add_channel_tags!(model;cw=cw)
 
-    model, tags, Nothing
+        model, tags, Nothing
     end
 end
 
@@ -44,21 +45,21 @@ function channel_model(nc::NTuple{3,<:Integer}, levels::Integer;
 
     function (parts::AbstractVector{<:Integer},rank_partition::NTuple{3,<:Integer})  
     
-    ranks_per_level = fill(rank_partition,levels) #Same amount of processors per level (potentially troublesome in coarse levels)
+        ranks_per_level = fill(rank_partition,levels) #Same amount of processors per level (potentially troublesome in coarse levels)
 
-    m_hierarchy = CartesianModelHierarchy(parts, ranks_per_level, domain, nc; map=mesh_map, nrefs=nrefs)      #This has no redistribution (see GridapDistributed -> Redistribution.jl)
+        m_hierarchy = CartesianModelHierarchy(parts, ranks_per_level, domain, nc; map=mesh_map, nrefs=nrefs)      #This has no redistribution (see GridapDistributed -> Redistribution.jl)
 
-    multigrid = Dict{Symbol,Any}(
-      :mh => m_hierarchy,
-      :num_refs_coarse => 0,  #What is this?
-      :ranks_per_level => ranks_per_level,
-    )
+        multigrid = Dict{Symbol,Any}(
+         :mh => m_hierarchy,
+         :num_refs_coarse => 0,  #What is this?
+         :ranks_per_level => ranks_per_level,
+        )
 
-    tags = add_channel_tags!(m_hierarchy;cw=cw)
+        tags = add_channel_tags!(m_hierarchy;cw=cw)
 
-    model = get_model(m_hierarchy,1)     #Pass the finnest level of the hierarchy as model (equivalent to get_model(mh[1]))
+        model = get_model(m_hierarchy,1)     #Pass the finnest level of the hierarchy as model (equivalent to get_model(mh[1]))
     
-    model, tags, multigrid
+        model, tags, multigrid
     end
 end
 
