@@ -1,7 +1,3 @@
-using GridapMHDCalculations
-using GridapMHDCalculations.models: map_Roberts, channel_model
-using Gridap
-
 function Run_test_channel(;
     b::Real = 1.0,         #Channel aspect ratio
     L::Real = 4.0,         #Channel lenght ratio
@@ -9,11 +5,11 @@ function Run_test_channel(;
     Re::Real = 1,          #Reynolds number
     nX::Integer = 6,       #Mesh cells X direction
     nY::Integer = 6,       #Mesh cells Y direction
-    nZ::Integer = 12,       #Mesh cells Z direction
+    nZ::Integer = 12,      #Mesh cells Z direction
   )
 
   #Define the boundary fields
-  U_inlet((x,y,z))=VectorValue(0.0,0.0,GridapMHDCalculations.u_parabolic(b)(x,y))
+  U_inlet((x,y,z))=VectorValue(0.0,0.0,u_parabolic(b)(x,y))
   B((x,y,z))=VectorValue(0.0,1.0,0.0)
 
   #Define the Gridap model 
@@ -51,7 +47,7 @@ function Run_test_channel(;
 
   #Call the steady state driver
 
-  SteadyState(;
+  kp = SteadyState(;
     title = "channel_test",
     path = "./results_test",
   #  backend = :sequential,
@@ -66,8 +62,22 @@ function Run_test_channel(;
     solver = :julia,
     convection = :newton,
     fespaces = FE_spaces,
-    post_process = GridapMHDCalculations.post_process_basic,
-    order_pp = max(FE_spaces[:order_u],FE_spaces[:order_j]),
-  #  solve = false,
+    post_process = pp_gradp_check,
+   # solve = false,
+    
   )
+
+  println("-----------------------------")
+  println("Numerial pressure gradient at the outlet:")
+  println(kp)
+  println("-----------------------------")
+
+  kp_Shercliff=kp_shercliff_cartesian(b,Ha)
+
+  println("-----------------------------")
+  println("Analitical pressure gradient:")
+  println(kp_Shercliff)
+  println("-----------------------------")
+
+  return kp  
 end

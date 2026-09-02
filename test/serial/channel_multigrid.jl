@@ -3,9 +3,9 @@ function Run_test_multigrid(;
     L::Real = 4.0,            #Channel lenght ratio
     Ha::Real = 1,             #Hartmann number
     Re::Real = 1,             #Reynolds number
-    nX::Integer = 12,         #Mesh cells X direction
-    nY::Integer = 12,         #Mesh cells Y direction
-    nZ::Integer = 24,         #Mesh cells Z direction
+    nX::Integer = 6,          #Mesh cells X direction
+    nY::Integer = 6,          #Mesh cells Y direction
+    nZ::Integer = 8,         #Mesh cells Z direction
     nrefs::Integer = 2,       #Refinement factor
     levels::Integer = 2,      #Refinement levels
     ζ::Real = 10.0,           #Augmented Lagrangian
@@ -14,7 +14,7 @@ function Run_test_multigrid(;
     )
 
     #Define the boundary fields
-    U_inlet((x,y,z))=VectorValue(0.0,0.0,GridapMHDCalculations.u_parabolic(b)(x,y))
+    U_inlet((x,y,z))=VectorValue(0.0,0.0,u_parabolic(b)(x,y))
     B((x,y,z))=VectorValue(0.0,1.0,0.0)
 
     #Define the Gridap model 
@@ -22,7 +22,7 @@ function Run_test_multigrid(;
     #Coarser multigrid level
     nX_c, nY_c, nZ_c = round.(Int,(nX,nY,nZ)./(nrefs*(levels-1)))  
 
-    Model = GridapMHDCalculations.models.channel_model(
+    Model = channel_model(
                 (nX_c,nY_c,nZ_c),       # Number of cells in the coarse level
                 levels;                 # Number of multigrid levels
                 nrefs = nrefs,          # Refinement factor per level
@@ -58,7 +58,7 @@ function Run_test_multigrid(;
 
         #Call the steady state driver
 
-    SteadyState(;
+    kp,u_wall = SteadyState(;
         title = "channel_multigrid_test",
         path = "./results_test",
     #    backend = :sequential,
@@ -69,14 +69,33 @@ function Run_test_multigrid(;
         Bfield = B,
         u_inlet = U_inlet,
         source = VectorValue(0.0,0.0,0.0),
-        ζᵤ = ζ,
+        ζ = ζ,
         μ_BC = μ_BC,
         mesh2vtk = false,
         solver = solver_multigrid,
         convection = :none,
         fespaces = FE_spaces,
-        post_process = GridapMHDCalculations.post_process_basic,
-        order_pp = max(FE_spaces[:order_u],FE_spaces[:order_j]),
-    #  solve = false,
+        post_process = pp_Noslip_check,
+ #       solve = false,
     )
+
+  println("-----------------------------")
+  println("Numerial pressure gradient at the outlet:")
+  println(kp)
+  println("-----------------------------")
+
+  kp_Shercliff=kp_shercliff_cartesian(b,Ha)
+
+  println("-----------------------------")
+  println("Analitical pressure gradient:")
+  println(kp_Shercliff)
+  println("-----------------------------")
+  
+  println("Average the velocity components at the channel wall:")
+  println(u_wall[1])
+  println(u_wall[2])
+  println(u_wall[3])
+  println("-----------------------------")
+
+  return kp, u_wall  
 end
