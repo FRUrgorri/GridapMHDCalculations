@@ -1,4 +1,4 @@
-function Run_test_mpi_multigrid(;
+function Run_test_multigrid(np::NTuple{3,Integer} =(2,2,2),  #Number of processes per multigrid level;
     b::Real = 1.0,                  #Channel aspect ratio
     L::Real = 4.0,                  #Channel lenght ratio
     Ha::Real = 1,                   #Hartmann number
@@ -6,7 +6,6 @@ function Run_test_mpi_multigrid(;
     nX::Integer = 12,               #Mesh cells X direction
     nY::Integer = 12,               #Mesh cells Y direction
     nZ::Integer = 24,               #Mesh cells Z direction
-    np::NTuple{3,Integer} =(2,2,2),  #Number of processes per multigrid level
     nrefs::Integer = 2,             #Refinement factor
     levels::Integer = 2,            #Refinement levels
     ζ::Real = 10.0,                 #Augmented Lagrangian

@@ -1,4 +1,4 @@
-function Run_test_channel(;
+function Run_test_channel(np::NTuple{3,Integer} =(2,2,2),  #Number of processes per multigrid level;
   b::Real = 1.0,         #Channel aspect ratio
   L::Real = 4.0,         #Channel lenght ratio
   Ha::Real = 10,         #Hartmann number
@@ -6,7 +6,6 @@ function Run_test_channel(;
   nX::Integer = 6,       #Mesh cells X direction
   nY::Integer = 6,       #Mesh cells Y direction
   nZ::Integer = 12,      #Mesh cells Z direction
-  np::NTuple{3,Integer} =(2,2,2),  #Number of processes per multigrid level
 )
 
 #Define the boundary fields
@@ -22,8 +21,8 @@ Model = channel_model(
               mesh_map = map_Roberts(b,Ha)
               )
 
-#Define solver (direct solver MUMPS in H1Hdiv formulation)
-"""
+#Define solver (direct solver MUMPS in H1H1 formulation)
+
 solver_direct = Dict(
   :solver => :petsc,
   :matrix_type    => SparseMatrixCSR{0,PetscScalar,PetscInt},
@@ -42,7 +41,7 @@ solver_direct = Dict(
     :φ => 0.0,
     ),
 )
-"""
+
 #Define the FE spaces parameters
 FE_spaces=Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :H1)
 
@@ -60,7 +59,7 @@ kp = SteadyState(;
   u_inlet = U_inlet,
   source = VectorValue(0.0,0.0,0.0),
   mesh2vtk = false,
-  solver = :julia,
+  solver = solver_direct,
   convection = :newton,
   fespaces = FE_spaces,
   post_process = pp_gradp_check,
