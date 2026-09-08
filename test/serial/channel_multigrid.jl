@@ -91,7 +91,7 @@ function Run_test_multigrid(;
   println(kp_Shercliff)
   println("-----------------------------")
 
-  println("Average the velocity components at the channel wall:")
+  println("Average value of the velocity components at the channel wall:")
   println(u_wall[1])
   println(u_wall[2])
   println(u_wall[3])
