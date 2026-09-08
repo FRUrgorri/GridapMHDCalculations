@@ -132,7 +132,7 @@ function pp_Noslip_check(output::output_info)
   wall_tags = []
   tag_names=get_tag_names(model)
   map(tag_names) do tag
-    if tag in ("insulated","conducting","thin_wall")
+    if tag ∈ ("insulated","conducting","thin_wall")
       push!(wall_tags,tag)
     end
   end
@@ -149,5 +149,5 @@ end
 #Utilities
 get_model(Ω) = Ω.model
 
-get_tag_names(model::DiscreteModel)=get_face_labeling(model).tag_to_name  #Equivalent to get_face_labeling(model) from Gridap
+get_tag_names(model::DiscreteModel)=get_face_labeling(model).tag_to_name  
 get_tag_names(model::GridapDistributed.DistributedDiscreteModel) = get_face_labeling(model).labels  #Take the names from the first part
