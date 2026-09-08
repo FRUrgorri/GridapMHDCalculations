@@ -9,7 +9,7 @@ function Run_test_multigrid(;
     nrefs::Integer = 2,       #Refinement factor
     levels::Integer = 2,      #Refinement levels
     ζ::Real = 10.0,           #Augmented Lagrangian
-    μ_BC::Real = 2.0,         #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
+    μ_BC::Real = 100.0,         #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
     map::Function = identity  #Mesh map function
     )
 
@@ -40,7 +40,7 @@ function Run_test_multigrid(;
     solver_multigrid = Dict(
         :solver => :h1h1blocks,
         :niter => 2,        #This I think it is the maximum iteration of the gmg (geometric multigrid) internal loop. Over this loop there is a Kirilov solver (FGMRES)
-        :niter_ls => 2,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
+        :niter_ls => 1,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
@@ -58,7 +58,7 @@ function Run_test_multigrid(;
 
         #Call the steady state driver
 
-    kp,u_wall = SteadyState(;
+    kp = SteadyState(;
         title = "channel_multigrid_test",
         path = "./results_test",
     #    backend = :sequential,
@@ -75,7 +75,7 @@ function Run_test_multigrid(;
         solver = solver_multigrid,
         convection = :none,
         fespaces = FE_spaces,
-        post_process = pp_Noslip_check,
+        post_process = pp_gradp_check,
  #       solve = false,
     )
 
@@ -91,11 +91,5 @@ function Run_test_multigrid(;
   println(kp_Shercliff)
   println("-----------------------------")
   
-  println("Average the velocity components at the channel wall:")
-  println(u_wall[1])
-  println(u_wall[2])
-  println(u_wall[3])
-  println("-----------------------------")
-
-  return kp, u_wall  
+   return kp 
 end
