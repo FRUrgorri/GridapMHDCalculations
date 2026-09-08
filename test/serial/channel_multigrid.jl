@@ -39,8 +39,8 @@ function Run_test_multigrid(;
     #Define multigrid solver 
     solver_multigrid = Dict(
         :solver => :h1h1blocks,
-        :niter => 2,        #This I think it is the maximum iteration of the gmg (geometric multigrid) internal loop. Over this loop there is a Kirilov solver (FGMRES)
-        :niter_ls => 1,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
+        :niter => 1,        #This I think it is the maximum iteration of the gmg (geometric multigrid) internal loop. Over this loop there is a Kirilov solver (FGMRES)
+        :niter_ls => 2,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
@@ -58,7 +58,7 @@ function Run_test_multigrid(;
 
         #Call the steady state driver
 
-    kp = SteadyState(;
+    kp, u_wall = SteadyState(;
         title = "channel_multigrid_test",
         path = "./results_test",
     #    backend = :sequential,
@@ -75,7 +75,7 @@ function Run_test_multigrid(;
         solver = solver_multigrid,
         convection = :none,
         fespaces = FE_spaces,
-        post_process = pp_gradp_check,
+        post_process = pp_Noslip_check,
  #       solve = false,
     )
 
@@ -90,6 +90,12 @@ function Run_test_multigrid(;
   println("Analitical pressure gradient:")
   println(kp_Shercliff)
   println("-----------------------------")
+
+  println("Average the velocity components at the channel wall:")
+  println(u_wall[1])
+  println(u_wall[2])
+  println(u_wall[3])
+  println("-----------------------------")
   
-   return kp 
+   return kp, u_wall 
 end

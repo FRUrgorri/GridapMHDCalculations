@@ -1,4 +1,4 @@
-function Run_test_channel(np::NTuple{3,Integer} =(2,2,2),  #Number of processes per multigrid level;
+function Run_test_channel(np::NTuple{3,Integer},  #Number of processes per multigrid level;
   b::Real = 1.0,         #Channel aspect ratio
   L::Real = 4.0,         #Channel lenght ratio
   Ha::Real = 10,         #Hartmann number

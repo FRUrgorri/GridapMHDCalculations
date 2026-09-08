@@ -1,4 +1,4 @@
-function Run_test_multigrid(np::NTuple{3,Integer} =(2,2,2),  #Number of processes per multigrid level;
+function Run_test_multigrid(np::NTuple{3,Integer},  #Number of processes per multigrid level;
     b::Real = 1.0,                  #Channel aspect ratio
     L::Real = 4.0,                  #Channel lenght ratio
     Ha::Real = 1,                   #Hartmann number
@@ -39,8 +39,8 @@ function Run_test_multigrid(np::NTuple{3,Integer} =(2,2,2),  #Number of processe
     #Define multigrid solver 
     solver_multigrid = Dict(
         :solver => :h1h1blocks,
-        :niter => 2,        #This I think it is the maximum iteration of the gmg (geometric multigrid) internal loop. Over this loop there is a Kirilov solver (FGMRES)
-#        :niter_ls => 2,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
+        :niter => 1,        #This I think it is the maximum iteration of the gmg (geometric multigrid) internal loop. Over this loop there is a Kirilov solver (FGMRES)
+        :niter_ls => 2,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
@@ -74,7 +74,7 @@ function Run_test_multigrid(np::NTuple{3,Integer} =(2,2,2),  #Number of processe
         solver = solver_multigrid,
         convection = :none,
         fespaces = FE_spaces,
-        post_process = GridapMHDCalculations.post_process_basic,
+        post_process = pp_Noslip_check,
     )
 
     println("-----------------------------")
