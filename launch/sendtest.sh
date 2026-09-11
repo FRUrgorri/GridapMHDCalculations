@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 1 
-#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks-per-node=8
 #SBATCH -t 01:00:00
 #SBATCH -p xula4
 
@@ -26,7 +26,7 @@ source ../env.sh
 
 #Parallel test using GridapMHD
 
-srun julia --project=.. -O3 --check-bounds=no ../test/channel.jl  
+srun julia --project=.. -O3 --check-bounds=no ../test/mpi/runtest_mpi.jl  
 
 
 duration=$SECONDS

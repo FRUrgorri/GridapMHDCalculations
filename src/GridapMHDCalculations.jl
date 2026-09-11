@@ -39,5 +39,6 @@ include("utils.jl")
 
 #Tests
 include("../test/serial/serialTest.jl")
+include("../test/mpi/mpiTest.jl")
 
 end # module GridapMHDCalculations

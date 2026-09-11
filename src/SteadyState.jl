@@ -71,7 +71,8 @@ end
 function _SteadyState(;
   title::String = "MHD_SS",
   path::String = ".",
-  distribute::Union{Nothing,AbstractVector} = nothing,
+  distribute::Union{Nothing,AbstractVector,Function} = nothing,
+#  distribute::Any = nothing,
   rank_partition::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,
   modelGen::Union{Nothing,Function} = nothing,              
 #  domain_tags = ("fluid",),           

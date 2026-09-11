@@ -1,4 +1,4 @@
-function Run_test_channel(np::NTuple{3,Integer},  #Number of processes per multigrid level;
+function Run_test_channel(np::NTuple{3,Integer};  #Number of processes per multigrid level
   b::Real = 1.0,         #Channel aspect ratio
   L::Real = 4.0,         #Channel lenght ratio
   Ha::Real = 10,         #Hartmann number
@@ -48,7 +48,7 @@ FE_spaces=Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_
 #Call the steady state driver
 
 kp = SteadyState(;
-  title = "channel_test",
+  title = "mpi_channel_test",
   path = "./results_test",
   backend = :mpi,
   np = np,
@@ -67,17 +67,21 @@ kp = SteadyState(;
   
 )
 
-println("-----------------------------")
-println("Numerial pressure gradient at the outlet:")
-println(kp)
-println("-----------------------------")
-
 kp_Shercliff=kp_shercliff_cartesian(b,Ha)
 
-println("-----------------------------")
-println("Analitical pressure gradient:")
-println(kp_Shercliff)
-println("-----------------------------")
+if MPI.Comm_rank(MPI.COMM_WORLD) ==0
+
+  println("-----------------------------")
+  println("Numerial pressure gradient at the outlet:")
+  println(kp)
+  println("-----------------------------")
+
+  println("-----------------------------")
+  println("Analitical pressure gradient:")
+  println(kp_Shercliff)
+  println("-----------------------------")
+
+end
 
 return kp  
 end
