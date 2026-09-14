@@ -1,7 +1,7 @@
 function Run_test_multigrid(;
     b::Real = 1.0,            #Channel aspect ratio
     L::Real = 4.0,            #Channel lenght ratio
-    Ha::Real = 1,             #Hartmann number
+    Ha::Real = 10,             #Hartmann number
     Re::Real = 1,             #Reynolds number
     nX::Integer = 6,          #Mesh cells X direction
     nY::Integer = 6,          #Mesh cells Y direction
@@ -9,8 +9,10 @@ function Run_test_multigrid(;
     nrefs::Integer = 2,       #Refinement factor
     levels::Integer = 2,      #Refinement levels
     ζ::Real = 10.0,           #Augmented Lagrangian
-    μ_BC::Real = 100.0,         #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
-    map::Function = identity  #Mesh map function
+    μ_BC::Real = 10.0,        #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
+    map::Function = identity, #Mesh map function,
+    mesh2vtk::Bool = false,   #Write the vtk
+    solve::Bool = true,       #Solve the model
     )
 
     #Define the boundary fields
@@ -33,14 +35,14 @@ function Run_test_multigrid(;
 
     #Define the FE formulation
     FE_spaces = Dict(:order_u => 1, :fluid_disc => :RT,
-                     :order_j => 1, :current_disc => :H1
+                     :order_j => 0, :current_disc => :H1
                     )
 
     #Define multigrid solver 
     solver_multigrid = Dict(
         :solver => :h1h1blocks,
         :niter => 1,        #This I think it is the maximum iteration of the gmg (geometric multigrid) internal loop. Over this loop there is a Kirilov solver (FGMRES)
-        :niter_ls => 2,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
+        :niter_ls => 6,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
@@ -71,12 +73,13 @@ function Run_test_multigrid(;
         source = VectorValue(0.0,0.0,0.0),
         ζ = ζ,
         μ_BC = μ_BC,
-        mesh2vtk = false,
+        mesh2vtk = mesh2vtk,
         solver = solver_multigrid,
         convection = :none,
         fespaces = FE_spaces,
         post_process = pp_Noslip_check,
- #       solve = false,
+        solve = solve,
+        pp_order=1,
     )
 
   println("-----------------------------")
