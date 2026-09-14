@@ -30,7 +30,7 @@ function SteadyState(;
   backend::Union{Nothing,Symbol} = nothing,
   np::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,
   title::String = "MHD_SS",
-#  nruns = 1,  #There is no interest a priory to repeate the same computation more than once (other than sudy scalability)
+#  nruns = 1,  #There is no interest a priory to repeate the same computation more than once (other than study scalability)
   path::String = ".",
   kwargs...
 )
@@ -93,6 +93,7 @@ function _SteadyState(;
   ζ::Real = 0.0,
   fespaces::Dict{Symbol, Any} = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
   post_process::Union{Nothing,Function} = nothing,
+  pp_order::Integer = 2,
 )
 
   info = Dict{Symbol,Any}()
@@ -109,6 +110,9 @@ function _SteadyState(;
     rank_partition = Tuple(fill(1,3))     #Always 3D problems (even FD are computationally 3D)
     distribute = DebugArray
   end
+
+  # With the mpi backend distribute(x;kwargs) is an anonymus function definded inside with_mpi(f;kwargs) (inside PartitionedArrays). 
+  # It is defined as x->distribute_with_mpi(x;kwargs) which returns an MPIArray. x is the collection that is distributed, in this case a LinearIndices array (AbstracArray) 
   parts = distribute(LinearIndices((prod(rank_partition),)))
   
   # Timer
@@ -237,7 +241,7 @@ TBD: Allow a more general stabilization (at least a bit)
     println("No postprocess actions")
   else
     #Construct the output_info and execute the selected postprocess function
-    outputs=output_info(xh,Ω,Bfield,path,title)
+    outputs=output_info(xh,Ω,Bfield,path,title,pp_order)
     pp_out=exec_post_process(post_process)(outputs)
     toc!(t,"post_process")
   end
