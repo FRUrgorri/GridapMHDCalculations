@@ -7,8 +7,7 @@ Post process function selector (see SteadyState.jl for the execution example)
 
 #Arguments
 
--`pp_function: post process function to be executed. It has the positional arguments (xh, Ω, B, path, title) and any key word arguments
--`kargs: key word arguments of pp_function 
+-`pp_function: post process function to be executed. It has the positional arguments (xh, Ω, B, path, title) 
 
 """
 function exec_post_process(pp_function::Function)
