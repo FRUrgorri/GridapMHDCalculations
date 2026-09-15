@@ -2,8 +2,10 @@ module GridapMHDCalculations
 
 using Revise
 
-include("../../master/GridapMHD.jl/src/GridapMHD.jl")       #TDB: Add a global path or something along those lines
-using .GridapMHD: main, default_solver_params, uses_petsc     #.GridapMHD = GridapMHDCalculations.GridapMHD This is necessary to get the exports from GridapMHD
+#include("../../master/GridapMHD.jl/src/GridapMHD.jl")       #TDB: Add a global path or something along those lines
+#using .GridapMHD: main, default_solver_params, uses_petsc     #.GridapMHD = GridapMHDCalculations.GridapMHD This is necessary to get the exports from GridapMHD
+
+using GridapMHD: main, default_solver_params, uses_petsc
 
 using PartitionedArrays
 using SparseArrays
