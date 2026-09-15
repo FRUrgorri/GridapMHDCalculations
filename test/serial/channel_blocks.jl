@@ -26,8 +26,8 @@ function Run_test_channel_blocks(;
  
  solver_blocks = Dict(
         :solver => :h1h1blocks,
-        :niter => 10,        #This I think it is the maximum iteration of the external Kirilov solver (FGMRES)
-        :niter_ls => 3,     #This I think it is the maximum iteration in each step of the loop. Over this loop there is a Kirilov solver (FGMRES)
+        :niter => 10,       #This are the maximum iteration of the non-linear Newton-Raphson solver
+        :niter_ls => 3,     #This is the maximum iterations of external Kirilov solver loop (FGMRES)
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers => [:julia,:julia,:julia],
@@ -46,8 +46,8 @@ function Run_test_channel_blocks(;
   #Call the steady state driver
 
   kp = SteadyState(;
-    title = "channel_test",
-    path = "./results_test",
+  title = "channel_blocks",
+  path = "./results/tests/serial",
   #  backend = :sequential,
   #  np = (2, 2, 1),
     modelGen = Model,

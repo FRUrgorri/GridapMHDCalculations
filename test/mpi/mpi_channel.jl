@@ -48,8 +48,8 @@ FE_spaces=Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_
 #Call the steady state driver
 
 kp = SteadyState(;
-  title = "mpi_channel_test",
-  path = "./results_test",
+  title = "channel",
+  path = "./results/tests/mpi",
   backend = :mpi,
   np = np,
   modelGen = Model,

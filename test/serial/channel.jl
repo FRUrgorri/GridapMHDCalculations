@@ -48,8 +48,8 @@ function Run_test_channel(;
   #Call the steady state driver
 
   kp = SteadyState(;
-    title = "channel_test",
-    path = "./results_test",
+    title = "channel",
+    path = "./results/tests/serial",
   #  backend = :sequential,
   #  np = (2, 2, 1),
     modelGen = Model,

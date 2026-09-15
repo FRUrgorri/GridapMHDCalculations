@@ -41,8 +41,8 @@ function Run_test_multigrid(;
     #Define multigrid solver 
     solver_multigrid = Dict(
         :solver => :h1h1blocks,
-        :niter => 1,        #This I think it is the maximum iteration of the gmg (geometric multigrid) internal loop. Over this loop there is a Kirilov solver (FGMRES)
-        :niter_ls => 6,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
+        :niter => 1,        #This are the maximum iteration of the non-linear Newton-Raphson solver
+        :niter_ls => 1,     #This is the maximum iterations of external Kirilov solver loop (FGMRES)  
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
@@ -61,8 +61,8 @@ function Run_test_multigrid(;
         #Call the steady state driver
 
     kp, u_wall = SteadyState(;
-        title = "channel_multigrid_test",
-        path = "./results_test",
+        title = "channel_multigrid",
+        path = "./results/tests/serial",
     #    backend = :sequential,
     #    np = (2,2,2),
         modelGen = Model,
