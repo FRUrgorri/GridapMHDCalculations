@@ -26,11 +26,11 @@ Driver that solves an MHD inductionless problem in steady state.
 - `μ_BC::Real = 2.0`: Penalty factor of the no slip BC in the HdivH1 and HdivHdiv formulations
 - `ζ::Real = 0.0`: Augmented Lagrangian factor for the iterative solver
 """
-function SteadyState(;
+function SteadyState(args...;
   backend::Union{Nothing,Symbol} = nothing,
   np::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,
   title::String = "MHD_SS",
-#  nruns = 1,  #There is no interest a priory to repeate the same computation more than once (other than sudy scalability)
+#  nruns = 1,  #There is no interest a priory to repeate the same computation more than once (other than study scalability)
   path::String = ".",
   kwargs...
 )
@@ -39,17 +39,17 @@ function SteadyState(;
 #    _title = title*"_r$ir"
     if isa(backend,Nothing)
       @assert isa(np,Nothing)
-      info, t, pp_out = _SteadyState(;title=title,path=path,kwargs...)
+      info, t, pp_out = _SteadyState(args...;title=title,path=path,kwargs...)
     else
       @assert backend ∈ [:sequential,:mpi]
       @assert !isa(np,Nothing)
       if backend === :sequential
         info, t, pp_out = with_debug() do distribute
-          _SteadyState(;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
+          _SteadyState(args...;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
         end
       else
         info, t, pp_out = with_mpi() do distribute
-          _SteadyState(;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
+          _SteadyState(args...;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
         end
       end
  #   end
@@ -68,30 +68,22 @@ function SteadyState(;
   return pp_out
 end
 
-function _SteadyState(;
+function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numbers;
   title::String = "MHD_SS",
   path::String = ".",
   distribute::Union{Nothing,AbstractVector} = nothing,
-  rank_partition::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,
-  modelGen::Union{Nothing,Function} = nothing,              
-#  domain_tags = ("fluid",),           
+  rank_partition::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,           
   normalization::Symbol = :mhd,                 
-  Ha::Union{Nothing,Real} = 10.0,
-  Re::Union{Nothing,Real} = 1.0,
-  N::Union{Nothing,Real} = nothing,
-  convection::Symbol = :newton,
-  Bfield::Union{Function,VectorValue{3,Float64}} = VectorValue(0.0,1.0,0.0),  
-  u_inlet::Union{Function,VectorValue{3,Float64}} = VectorValue(0.0,0.0,1.0), 
+  convection::Symbol = :newton,   
   solve::Bool = true,
   solver::Union{Dict,Symbol} = :julia,
   verbose::Bool = true,
   mesh2vtk::Bool = false,
-  source::VectorValue{3,Float64} = VectorValue(0.0, 0.0, 0.0),
 #  μ = 0.0,
   μ_BC::Real = 2.0,
   ζ::Real = 0.0,
   fespaces::Dict{Symbol, Any} = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
-  post_process::Union{Nothing,Function} = nothing,
+  post_process::Union{Nothing,Function,Vector{Function}} = nothing,
 )
 
   info = Dict{Symbol,Any}()
@@ -108,6 +100,9 @@ function _SteadyState(;
     rank_partition = Tuple(fill(1,3))     #Always 3D problems (even FD are computationally 3D)
     distribute = DebugArray
   end
+  
+  # With the mpi backend, distribute(x;kwargs) is an anonymus function definded inside with_mpi(f;kwargs) (inside PartitionedArrays). 
+  # It is defined as x->distribute_with_mpi(x;kwargs) which returns an MPIArray. x is the collection that is distributed, in this case a LinearIndices array (AbstracArray) 
   parts = distribute(LinearIndices((prod(rank_partition),)))
   
   # Timer
@@ -123,7 +118,9 @@ function _SteadyState(;
   
   #Fespaces parameters
   params[:fespaces] = fespaces
-  
+
+  #Unpack inputs
+  (;Ha,Re,N) = numbers
 
   # Reduced quantities
   @assert normalization ∈ [:mhd,:cfd]
@@ -137,14 +134,14 @@ function _SteadyState(;
     γ = N
   end
   
-  #Model from the input  function
+  #Build the model from mounted model structure
   
-  @assert !isa(modelGen,Nothing)  "modelGen funtion not provided"
-  model, tags, multigrid = modelGen(parts,rank_partition)
-  
-  tags_u, tags_j, tags_φ = tags 
+  # model = rank_partition == (1,1,1) ? mounted_model() : mounted_model(parts,rank_partition)
+  # There is something prevetin the serial call of CartesianDiscreteModel inside GridapMHD.main.jl. It is probably a minnor fix but in the meantime mounted_model() is not callable
 
-  params[:multigrid] = multigrid #Ignored in single grid case
+  model =  mounted_model(parts,rank_partition)  
+
+ # params[:multigrid] = multigrid  #Ignored in single grid case
 
   params[:model] = model
   Ω = Interior(model)
@@ -161,8 +158,8 @@ function _SteadyState(;
     :α=>α,
     :β=>β,
     :γ=>γ,
-    :f=>source,
-    :B=>Bfield,
+    :f=>mounted_model.source,
+    :B=>mounted_model.B,
     :ζᵤ => ζ,
     :convection=>convection,
     :μ => μ_BC,
@@ -175,24 +172,26 @@ function _SteadyState(;
     params[:solid] = Dict(:domain=>"solid", :σ=>σ_Ω)
   end
 """
-  # Boundary conditions
+
+  #Unpack BC tags and values
+  
+  (;tags_U, tags_J, tags_φ) = mounted_model.BCs.tags
+  (;U, J, φ) = mounted_model.BCs.values
+
+  # Boundary conditions dictionary
     j_BC = Dict(
-      :tags=>tags_j
+      :tags => tags_J,
+      :values => J
     )
-  if "inlet" in tags_u
+
     u_BC = Dict(
-      :tags=>tags_u,
-      :values=>[u_inlet, fill(VectorValue(0.0, 0.0, 0.0), length(tags_u)-1)...]
+      :tags => tags_U,
+      :values => U
     )
-  else
-   u_BC = Dict(
-      :tags=>tags_u
-      )
-  end
   
   params[:bcs] = Dict(
-    :u=>u_BC,
-    :j=>j_BC,
+    :u => u_BC,
+    :j => j_BC,
 #    :thin_wall=>thinWall_params, #TBD
   )
 
@@ -202,7 +201,8 @@ function _SteadyState(;
       params[:fespaces][:φ_constrain] = :zeromean
     else
       params[:bcs][:φ] = Dict(
-        :tags=>tags_φ
+        :tags => tags_φ,
+        :values => φ
         )
     end
   end
@@ -236,7 +236,7 @@ TBD: Allow a more general stabilization (at least a bit)
     println("No postprocess actions")
   else
     #Construct the output_info and execute the selected postprocess function
-    outputs=output_info(xh,Ω,Bfield,path,title)
+    outputs=output_info(xh,Ω,mounted_model.B,path,title)
     pp_out=exec_post_process(post_process)(outputs)
     toc!(t,"post_process")
   end
@@ -249,7 +249,13 @@ TBD: Allow a more general stabilization (at least a bit)
 
 
 # Info about the solution
+  info[:model] = mounted_model
+  info[:order_u] = fespaces[:order_u]
+  info[:order_j] = fespaces[:order_j]
   info[:ncells] = num_cells(model)
+  info[:fluid_disc] = fespaces[:fluid_disc]
+  info[:current_disc] = fespaces[:current_disc]
+  info[:ndofs] = length(get_free_dof_values(xh))
   info[:ndofs_u] = length(get_free_dof_values(xh[1]))
   info[:ndofs_p] = length(get_free_dof_values(xh[2]))
   if fespaces[:current_disc] == :RT
@@ -259,15 +265,14 @@ TBD: Allow a more general stabilization (at least a bit)
     info[:ndofs_j] = "No current dofs"
     info[:ndofs_φ] = length(get_free_dof_values(xh[3]))
   end
-  info[:ndofs] = length(get_free_dof_values(xh))
+  info[:normalization] = normalization
   info[:Re] = Re
   info[:Ha] = Ha
   info[:N] = N
   info[:convection] = convection
-  info[:fluid_disc] = fespaces[:fluid_disc]
-  info[:current_disc] = fespaces[:current_disc]
-  info[:order_u] = fespaces[:order_u]
-  info[:order_j] = fespaces[:order_j]
+  info[:ζ] = ζ
+  info[:μ_BC] = μ_BC
+  
 #  info[:cw] = cw
   
 #  info[:μ] = μ

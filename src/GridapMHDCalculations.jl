@@ -2,7 +2,7 @@ module GridapMHDCalculations
 
 using Revise
 
-include("../../../master/GridapMHD.jl/src/GridapMHD.jl")       #TDB: Add a global path or something along those lines
+include("../../../../master/GridapMHD.jl/src/GridapMHD.jl")       #TDB: Add a global path or something along those lines
 using .GridapMHD: main, default_solver_params, uses_petsc     #.GridapMHD = GridapMHDCalculations.GridapMHD This is necessary to get the exports from GridapMHD
 
 using PartitionedArrays
@@ -23,8 +23,8 @@ using GridapSolvers
 using FileIO
 using BSON
 
-include("Data.jl")
-export output_info
+include("types.jl")
+export Dimensionless_numbers, mounted_models
 
 include("models/models.jl")
 
@@ -33,7 +33,7 @@ export SteadyState
 
 include("MagneticFields.jl")
 include("PostProcess.jl")
-export exec_post_process
+export exec_post_process, output_info
 
 include("utils.jl")
 

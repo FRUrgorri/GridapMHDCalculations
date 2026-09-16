@@ -13,7 +13,7 @@
     -`cw : wall conductance ratio (>100 --> perfect conductor)
 
 """
-function channel_model(nc::NTuple{3,<:Integer};
+function channel_model(nc::NTuple{3,Integer};
     b::Real = 1.0,
     L::Real = 2.0,
     mesh_map::Function = identity,
@@ -22,7 +22,7 @@ function channel_model(nc::NTuple{3,<:Integer};
     
     domain = (-b, b, -1.0, 1.0, 0.0, L)
     
-    function (parts::AbstractVector{<:Integer},rank_partition::Union{<:Integer,NTuple{3,<:Integer}})  
+    function (parts::AbstractVector{Integer},rank_partition::Union{Integer,NTuple{3,Integer}})  
         
         model=CartesianDiscreteModel(parts, rank_partition, domain, nc; map=mesh_map)
   
@@ -33,8 +33,8 @@ function channel_model(nc::NTuple{3,<:Integer};
 end
 
 #Method for a Cartesian Hierarchy model
-function channel_model(nc::NTuple{3,<:Integer}, levels::Integer;
-    nrefs::Union{<:Integer,NTuple{3,<:Integer}} = 2,
+function channel_model(nc::NTuple{3,Integer}, levels::Integer;
+    nrefs::Union{<:Integer,NTuple{3,Integer}} = 2,
     b::Real = 1.0,
     L::Real = 2.0,
     mesh_map::Function = identity,
@@ -43,7 +43,7 @@ function channel_model(nc::NTuple{3,<:Integer}, levels::Integer;
     
     domain = (-b, b, -1.0, 1.0, 0.0, L)
 
-    function (parts::AbstractVector{<:Integer},rank_partition::NTuple{3,<:Integer})  
+    function (parts::AbstractVector{Integer},rank_partition::NTuple{3,Integer})  
     
         ranks_per_level = fill(rank_partition,levels) #Same amount of processors per level (potentially troublesome in coarse levels)
 
@@ -99,7 +99,7 @@ function add_channel_tags!(model::Union{CartesianDiscreteModel,GridapDistributed
     	error("Thin wall BC not implemented in the SteadyState driver yet")  #TBD
     end
 
-    Dirichlet_Utags, Dirichlet_Jtags, Dirichlet_φtags
+    return Dirichlet_tag_names(Dirichlet_Utags, Dirichlet_Jtags, Dirichlet_φtags)
 end
 
 #Collect tag every level
