@@ -7,33 +7,50 @@ Post process function selector (see SteadyState.jl for the execution example)
 
 #Arguments
 
--`pp_function: post process function to be executed. It has the positional arguments (xh, Ω, B, path, title) and any key word arguments
--`kargs: key word arguments of pp_function 
+-`pp_function: post process function to be executed. A vector of functions can be passed for a sequential execution. The functions must take an output_info as positional argument
 
 """
-function exec_post_process(pp_function::Function)
-     (output::output_info) -> pp_function(output)
+#Single execution
+exec_post_process(pp_function::Function) = (output::output_info) -> pp_function(output)
 
+#Sequential execution
+exec_post_process(pp_functions::Vector{Function}) = (output::output_info) -> map(f->exec_post_process(f)(output),pp_functions)  
+
+
+"""
+Struct with the output information of every computation
+
+#Fields
+ -`xh`:Cell fields
+ -`Ω`: Model triangulation
+ -`B`: External magnetic field, either a function or a VectorValue
+ -`path`: path to the writting folder
+ -`title`: title of the output files
+ -`order`: order of the output vtk file
+"""
+struct output_info{C,T}
+  xh::C
+  Ω::T
+  B::Union{Function,VectorValue{3,Float64}}
+  path::String
+  title::String
+  order::Int64
 end
 
-"""
-post_process_basic(args)
+#Constructors of the output_info type
+output_info(xh,Ω,B,path,title) = output_info(xh,Ω,B,path,title,2)
 
-Most basic postprocess function, it generates the cell fields and write them in a vtk file for paraview. It optionally passes an the fields defined in the out_field
+"""
+writeFields_vtk(output_info)
+
+Most basic postprocess function, it generates the cell fields and write them in a vtk file for paraview. I
 
 #Arguments
 
 -`output`: output information structure
--`path: path for the output vtk file
--`title: title for the output vtk file
-
-#keyword arguments
--`order_pp`: Interpolation order of the vtk file
--`pass_fields`: Tuple with the names (strings) of the fields that want to be passed by the function
-
 """
 
-function post_process_basic(output::output_info; pass_fields::Union{Nothing,Tuple} = nothing) 
+function writeFields_vtk(output::output_info) 
                               
   if length(output.xh) == 4
     _cellfields = pp_4fields(output)
@@ -44,15 +61,7 @@ function post_process_basic(output::output_info; pass_fields::Union{Nothing,Tupl
   end
   writevtk(output.Ω, joinpath(output.path, output.title), order=output.order, cellfields=_cellfields)
   
-  #Check if an output field is necessary for further pos-process
-  if !isnothing(pass_fields)
-    field_dict = Dict(_cellfields)
-    cellfields_pass=map(x->field_dict[x],pass_fields)
-  else
-    cellfields_pass = nothing
-  end
-
-  return cellfields_pass
+  return nothing
 end
 
 function pp_4fields(output::output_info)
@@ -103,9 +112,22 @@ function pp_3fields(output::output_info)
   return cellfields
 end
 
-function pp_gradp_check(output::output_info)
+"""
+gradp_check(output::output_info)
+Compute the pressure gradient at the "outlet" tag 
+"""
+
+function gradp_check(output::output_info)
+
+  if length(output.xh) == 4
+    cellfields = pp_4fields(output)
+  elseif length(output.xh) == 3
+    cellfields = pp_3fields(output)
+  else
+    error("post_process expects 3 or 4 fields, got $(length(xh))")
+  end
   
-  grad_p,=post_process_basic(output; pass_fields=("grad_p",))
+  grad_p = Dict(cellfields)["grad_p"]   #converting into a dictionary to find the value associated to the field is perhaps not efficient?
 
   #Computing the pressure axial gradient at the outlet to compare it with an analytical formula
   model=get_model(output.Ω)
@@ -115,34 +137,38 @@ function pp_gradp_check(output::output_info)
   return sum(∫(-grad_p)*dΓ)[3]/sum(∫(1.0)*dΓ)
 end
 
-function pp_Noslip_check(output::output_info)
+"""
+noSlip_check(output::output_info)
+Check the noslip BC by computing the velocity in the tags  ("insulated","conducting","thin_wall","wall")
 
-  uh, grad_p = post_process_basic(output; pass_fields=("uh","grad_p"))
-  
-  #Computing the pressure axial gradient at the outlet to compare it with an analytical formula
-  model=get_model(output.Ω)
+"""
 
-  Γ_out = Boundary(model;tags="outlet")
-  dΓ_out= Measure(Γ_out,output.order+1)
-  kp= sum(∫(-grad_p)*dΓ_out)[3]/sum(∫(1.0)*dΓ_out)
+function noSlip_check(output::output_info)
 
-  #Check the no_slip_condition (using average velocity)
-  
+  if length(output.xh) == 4
+    cellfields = pp_4fields(output)
+  elseif length(output.xh) == 3
+    cellfields = pp_3fields(output)
+  else
+    error("post_process expects 3 or 4 fields, got $(length(xh))")
+  end
+
+  uh = Dict(cellfields)["uh"] 
+   
   #Collect wall tags
+  model=get_model(output.Ω)
   wall_tags = []
   tag_names=get_tag_names(model)
   map(tag_names) do tag
-    if tag in ("insulated","conducting","thin_wall")
+    if tag in ("insulated","conducting","thin_wall","wall")
       push!(wall_tags,tag)
     end
   end
 
-  Γ_wall = Boundary(model;tags="insulated")
+  Γ_wall = Boundary(model;tags=wall_tags)
   dΓ_wall= Measure(Γ_wall,output.order+1)
-  u_wall = sum(∫(uh)*dΓ_wall)/sum(∫(1.0)*dΓ_wall)
 
-
-  return kp, u_wall
+  return sum(∫(uh)*dΓ_wall)/sum(∫(1.0)*dΓ_wall)
 
 end
 
