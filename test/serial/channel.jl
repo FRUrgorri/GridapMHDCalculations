@@ -6,20 +6,26 @@ function Run_test_channel(;
     nX::Integer = 6,       #Mesh cells X direction
     nY::Integer = 6,       #Mesh cells Y direction
     nZ::Integer = 12,      #Mesh cells Z direction
+    solve::Bool = true     #Solve the problem
   )
+
+  #Define geometry and mesh
+  geo = channel_geom(b,L)
+  mesh = channel_mesh((nX,nY,nZ),map_Roberts(b,Ha))
 
   #Define the boundary fields
   U_inlet((x,y,z))=VectorValue(0.0,0.0,u_parabolic(b)(x,y))
-  B((x,y,z))=VectorValue(0.0,1.0,0.0)
 
-  #Define the Gridap model 
+  tags = BC_tags(["inlet","walls"],["inlet","outlet","walls"])
+  values = BC_values([U_inlet])
+  bounds = BC(tags,values)
 
-  Model = channel_model(
-                (nX,nY,nZ);
-                b = b,
-                L = L,
-                mesh_map = map_Roberts(b,Ha)
-                )
+  #Define the Gridap model
+
+  mounted_insulated_channel = insulated_channel(geo, mesh, bounds)
+
+  #Define the dimensionless numbets
+  numbers = Dimensionless_numbers(;Ha=Ha,Re=Re)
 
   #Define solver (direct solver MUMPS in H1Hdiv formulation)
   """
@@ -47,29 +53,19 @@ function Run_test_channel(;
 
   #Call the steady state driver
 
-  kp = SteadyState(;
-    title = "channel_test",
-    path = "./results_test",
-  #  backend = :sequential,
-  #  np = (2, 2, 1),
-    modelGen = Model,
-    Ha = Ha,
-    N = Ha^2/Re,
-    Bfield = B,
-    u_inlet = U_inlet,
-    source = VectorValue(0.0,0.0,0.0),
-    mesh2vtk = false,
-    solver = :julia,
-    convection = :newton,
-    fespaces = FE_spaces,
-    post_process = pp_gradp_check,
-   # solve = false,
-    
-  )
+  kp = SteadyState(mounted_insulated_channel, numbers;
+          title = "channel_test",
+          path = "./results_test",
+          solver = :julia,
+          convection = :newton,
+          fespaces = FE_spaces,
+          post_process = [writeFields_vtk,gradp_check],
+          solve = solve, 
+          )
 
   println("-----------------------------")
   println("Numerial pressure gradient at the outlet:")
-  println(kp)
+  println(kp[2])
   println("-----------------------------")
 
   kp_Shercliff=kp_shercliff_cartesian(b,Ha)
@@ -79,5 +75,5 @@ function Run_test_channel(;
   println(kp_Shercliff)
   println("-----------------------------")
 
-  return kp  
+  return kp[2]  
 end
