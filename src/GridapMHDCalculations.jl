@@ -25,8 +25,8 @@ using GridapSolvers
 using FileIO
 using BSON
 
-include("Data.jl")
-export output_info
+include("types.jl")
+export Dimensionless_numbers, mounted_models
 
 include("models/models.jl")
 
@@ -35,7 +35,7 @@ export SteadyState
 
 include("MagneticFields.jl")
 include("PostProcess.jl")
-export exec_post_process
+export exec_post_process, output_info
 
 include("utils.jl")
 
