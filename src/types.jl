@@ -6,30 +6,6 @@ Supertype for all the models to be run with this package
 abstract type mounted_models end
 
 """
-Struct with the output information of every computation
-
-#Fields
- -`xh`:Cell fields
- -`Ω`: Model triangulation
- -`B`: External magnetic field, either a function or a VectorValue
- -`path`: path to the writting folder
- -`title`: title of the output files
- -`order`: order of the output vtk file
-"""
-struct output_info{C,T}
-  xh::C
-  Ω::T
-  B::Union{Function,VectorValue{3,Float64}}
-  path::String
-  title::String
-  order::Int64
-end
-
-#Constructors of the output_info type
-
-output_info(xh,Ω,B,path,title) = output_info(xh,Ω,B,path,title,2)
-
-"""
 Struct with the dimensionless numbers. The constructor checks if the numbers are consistent according to the equations: N = Ha²/Re
 
 #Fields
@@ -48,7 +24,7 @@ Dimensionless_numbers(Ha,Re,N) = Dimensionless_numbers{Float64}(Ha,Re,N)    #Def
 Dimensionless_numbers() = Dimensionless_numbers(1.0,1.0,1.0)
 
 
-function Dimensionless_numbers(; Ha=nothing, Re=nothing, N=nothing) 
+function Dimensionless_numbers(; Ha=nothing, Re=nothing, N=nothing) #Method based on keyword arguments 
 
     n = count(!isnothing, (Ha, Re, N))
     if n == 2
