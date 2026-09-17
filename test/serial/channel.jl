@@ -49,11 +49,11 @@ function Run_test_channel(;
   )
   """
   #Define the FE spaces parameters
-  FE_spaces=Dict(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :H1)
+  FE_spaces=Dict(:order_u => 2, :order_j => 1, :fluid_disc => :Qk_dPkm1, :current_disc => :H1)
 
   #Call the steady state driver
 
-  kp = SteadyState(mounted_insulated_channel, numbers;
+  out = SteadyState(mounted_insulated_channel, numbers;
           title = "channel_test",
           path = "./results_test",
           solver = :julia,
@@ -65,7 +65,7 @@ function Run_test_channel(;
 
   println("-----------------------------")
   println("Numerial pressure gradient at the outlet:")
-  println(kp[2])
+  println(out[2])
   println("-----------------------------")
 
   kp_Shercliff=kp_shercliff_cartesian(b,Ha)
@@ -75,5 +75,5 @@ function Run_test_channel(;
   println(kp_Shercliff)
   println("-----------------------------")
 
-  return kp[2]  
+  return out[2]  
 end

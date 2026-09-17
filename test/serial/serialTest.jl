@@ -8,6 +8,6 @@ using Gridap
 using SparseArrays
 
 include("channel.jl")
-#include("channel_multigrid.jl")
+include("channel_multigrid.jl")
 
 end 

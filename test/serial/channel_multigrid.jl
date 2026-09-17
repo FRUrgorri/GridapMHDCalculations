@@ -5,46 +5,47 @@ function Run_test_multigrid(;
     Re::Real = 1,             #Reynolds number
     nX::Integer = 6,          #Mesh cells X direction
     nY::Integer = 6,          #Mesh cells Y direction
-    nZ::Integer = 8,         #Mesh cells Z direction
+    nZ::Integer = 8,          #Mesh cells Z direction
+    map::Function = identity, #Mesh map function
     nrefs::Integer = 2,       #Refinement factor
     levels::Integer = 2,      #Refinement levels
     ζ::Real = 10.0,           #Augmented Lagrangian
     μ_BC::Real = 2.0,         #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
-    map::Function = identity  #Mesh map function
+    solve::Bool = true,       #Solve the test
     )
+
+    #Define geometry and mesh
+    geo = channel_geom(b,L)
+     
+    nX_c, nY_c, nZ_c = round.(Int,(nX,nY,nZ)./(nrefs*(levels-1)))  #Coarser multigrid level
+    mesh = channel_mesh((nX_c,nY_c,nZ_c),map,levels,nrefs)
 
     #Define the boundary fields
     U_inlet((x,y,z))=VectorValue(0.0,0.0,u_parabolic(b)(x,y))
-    B((x,y,z))=VectorValue(0.0,1.0,0.0)
+
+    tags = BC_tags(["inlet","walls"],["inlet","outlet","walls"])
+    values = BC_values([U_inlet])
+    bounds = BC(tags,values)
 
     #Define the Gridap model 
-
-    #Coarser multigrid level
-    nX_c, nY_c, nZ_c = round.(Int,(nX,nY,nZ)./(nrefs*(levels-1)))  
-
-    Model = channel_model(
-                (nX_c,nY_c,nZ_c),       # Number of cells in the coarse level
-                levels;                 # Number of multigrid levels
-                nrefs = nrefs,          # Refinement factor per level
-                b = b,
-                L = L,
-                mesh_map = map
-                )
+    mounted_insulated_channel = insulated_channel(geo, mesh, bounds)
+    
+    #Define the dimensionless numbets
+    numbers = Dimensionless_numbers(;Ha=Ha,Re=Re)
 
     #Define the FE formulation
     FE_spaces = Dict(:order_u => 1, :fluid_disc => :RT,
-                     :order_j => 1, :current_disc => :H1
+                     :order_j => 0, :current_disc => :H1
                     )
 
     #Define multigrid solver 
     solver_multigrid = Dict(
         :solver => :h1h1blocks,
-        :niter => 2,        #This I think it is the maximum iteration of the gmg (geometric multigrid) internal loop. Over this loop there is a Kirilov solver (FGMRES)
-        :niter_ls => 2,     #This I think it is the maximum iterations of the most external Kirilov solver loop (FGMRES) (not counting NR solver if there is convection) 
+        :niter => 1,        #This are the maximum iteration of the non-linear Newton-Raphson solver
+        :niter_ls => 1,     #This is the maximum iterations of external Kirilov solver loop (FGMRES)  
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
-#        :block_solvers => [:julia,:julia,:julia],
         :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged true -ksp_converged_reason",
         :initial_values => Dict(
             :u => U_inlet,
@@ -58,30 +59,21 @@ function Run_test_multigrid(;
 
         #Call the steady state driver
 
-    kp,u_wall = SteadyState(;
-        title = "channel_multigrid_test",
+    out = SteadyState(mounted_insulated_channel, numbers;
+        title = "channel_test",
         path = "./results_test",
-    #    backend = :sequential,
-    #    np = (2,2,2),
-        modelGen = Model,
-        Ha = Ha,
-        N = Ha^2/Re,
-        Bfield = B,
-        u_inlet = U_inlet,
-        source = VectorValue(0.0,0.0,0.0),
-        ζ = ζ,
-        μ_BC = μ_BC,
-        mesh2vtk = false,
         solver = solver_multigrid,
         convection = :none,
         fespaces = FE_spaces,
-        post_process = pp_Noslip_check,
- #       solve = false,
-    )
+        solve = solve, 
+        ζ = ζ,
+        μ_BC = μ_BC,
+        post_process = [writeFields_vtk,gradp_check,noSlip_check],
+        )
 
   println("-----------------------------")
   println("Numerial pressure gradient at the outlet:")
-  println(kp)
+  println(out[2])
   println("-----------------------------")
 
   kp_Shercliff=kp_shercliff_cartesian(b,Ha)
@@ -92,10 +84,10 @@ function Run_test_multigrid(;
   println("-----------------------------")
   
   println("Average the velocity components at the channel wall:")
-  println(u_wall[1])
-  println(u_wall[2])
-  println(u_wall[3])
+  println(out[3][1])
+  println(out[3][2])
+  println(out[3][3])
   println("-----------------------------")
 
-  return kp, u_wall  
+  return out[2], out[3]  
 end
