@@ -139,9 +139,9 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
   # model = rank_partition == (1,1,1) ? mounted_model() : mounted_model(parts,rank_partition)
   # There is something prevetin the serial call of CartesianDiscreteModel inside GridapMHD.main.jl. It is probably a minnor fix but in the meantime mounted_model() is not callable
 
-  model =  mounted_model(parts,rank_partition)  
+  model,multigrid =  mounted_model(parts,rank_partition)  
 
- # params[:multigrid] = multigrid  #Ignored in single grid case
+  params[:multigrid] = multigrid  #Ignored in single grid case
 
   params[:model] = model
   Ω = Interior(model)

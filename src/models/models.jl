@@ -5,6 +5,7 @@ using GridapSolvers
 using GridapDistributed
 using PartitionedArrays
 using GridapMHDCalculations: mounted_models
+using GridapMHDCalculations
 
 include("BC.jl")
 export BC_tags, BC_values, BC
