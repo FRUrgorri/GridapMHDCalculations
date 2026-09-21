@@ -54,8 +54,8 @@ function Run_test_channel(;
   #Call the steady state driver
 
   out = SteadyState(mounted_insulated_channel, numbers;
-          title = "channel_test",
-          path = "./results_test",
+          title = "channel",
+          path = "./results/tests/serial",
           solver = :julia,
           convection = :newton,
           fespaces = FE_spaces,

@@ -60,8 +60,8 @@ function Run_test_multigrid(;
         #Call the steady state driver
 
     out = SteadyState(mounted_insulated_channel, numbers;
-        title = "channel_test",
-        path = "./results_test",
+        title = "channel_multigrid",
+        path = "./results/tests/serial",
         solver = solver_multigrid,
         convection = :none,
         fespaces = FE_spaces,

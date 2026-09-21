@@ -1,3 +1,4 @@
+#For testing the MPI enviroment
 using MPI
 
 MPI.Init() #This command creates the fork

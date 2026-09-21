@@ -1,8 +1,9 @@
 module mpiTest
 
 using GridapMHDCalculations
-using GridapMHDCalculations: kp_shercliff_cartesian, u_parabolic, pp_gradp_check, pp_Noslip_check, post_process_basic 
-using GridapMHDCalculations.models: map_Roberts, channel_model
+using GridapMHDCalculations: kp_shercliff_cartesian, u_parabolic, gradp_check, noSlip_check, writeFields_vtk 
+using GridapMHDCalculations.models
+using GridapMHDCalculations.models: insulated_channel, channel_geom, channel_mesh
 using Gridap, GridapPETSc
 using SparseArrays, SparseMatricesCSR
 using MPI
