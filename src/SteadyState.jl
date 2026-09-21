@@ -1,24 +1,21 @@
 using GridapMHDCalculations
 
 """
-  SteadyState(; <keyword arguments>)
+  SteadyState(arguments...; keyword arguments...)
 
 Driver that solves an MHD inductionless problem in steady state.
 
-# Arguments
+# Positional arguments
+- `mounted_model`: struct of the supertype mounted_models. See insulated_channel for an example
+- `numbers` : Dimensionless numbers that defines the simulation (Ha, Re, N). It is given as a Dimensionless_numbers struct
+
+# Keyword arguments  
 - `backend = nothing`: backend for parallelization. Values: nothing, :sequential or :mpi.
-- `np = nothing`: array describing mesh partitioning for parallelization.
+- `np = nothing`: array describing mesh partitioning for parallelization. Partitions perlevel in case of multigrid
 - `title = "Solid"`: job title used for saved files.
 - `path = "."`: path where saved files are stored.
-- `modelGen = nothing, function that generates a Gridap model with the shape (parts, ranks) -> model, tags. See Meshers module for examples 
 - `normalization = :mhd` normalization of the problem variables (pressure) :mhd or :cfd
-- `Ha = 10.0`: Hartmann number.
-- `Re = 1.0`: Reynolds number.
-- `N = nothing`: interaction number.
 - `convection = true`: toggle for the weak form convective term.
-- `B = VectorValue(0.0,1.0,0.0)`: external magnetic field B((x,y,z))/B0.
-- `U_inlet = VectorValue(0.0,0.0,1.0)`: inlet velocity field U((x,y,z))/U0
-- `source = VectorValue(0.0,0.0,0.0)`: momentum source F((x,y,z))/(j0·B0)
 - `solve = true`: toggle to run the solver.
 - `solver = :julia`: solver to be used and additional solver parameters.
 - `verbose = true`: print time statistics.
@@ -44,9 +41,7 @@ function SteadyState(args...;
       @assert backend ∈ [:sequential,:mpi]
       @assert !isa(np,Nothing)
       if backend === :sequential
-        info, t, pp_out = with_debug() do distribute
-          _SteadyState(args...;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
-        end
+        info, t, pp_out = _SteadyState(args...;distribute=DebugArray,rank_partition=np,title=title,path=path,kwargs...)
       else
         info, t, pp_out = with_mpi() do distribute
           _SteadyState(args...;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
@@ -71,7 +66,7 @@ end
 function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numbers;
   title::String = "MHD_SS",
   path::String = ".",
-  distribute::Union{Nothing,AbstractVector} = nothing,
+  distribute::Union{Nothing,Type{DebugArray},Function} = nothing, 
   rank_partition::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,           
   normalization::Symbol = :mhd,                 
   convection::Symbol = :newton,   
@@ -84,7 +79,7 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
   ζ::Real = 0.0,
   fespaces::Dict{Symbol, Any} = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
   post_process::Union{Nothing,Function,Vector{Function}} = nothing,
-)
+) 
 
   info = Dict{Symbol,Any}()
 
