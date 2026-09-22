@@ -61,7 +61,7 @@ function Run_test_multigrid(;
 
     out = SteadyState(mounted_insulated_channel, numbers;
         title = "channel_multigrid",
-        path = "./results/tests/serial",
+        path = "./data/tests/serial",
         solver = solver_multigrid,
         convection = :none,
         fespaces = FE_spaces,

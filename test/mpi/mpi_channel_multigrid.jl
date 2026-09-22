@@ -62,7 +62,7 @@ function Run_test_multigrid(np::NTuple{3,Integer};
 
     out = SteadyState(mounted_insulated_channel, numbers;
         title = "channel_multigrid",
-        path = "./results/tests/mpi",
+        path = "./data/tests/mpi",
         solver = solver_multigrid,
         backend = backend,
         np = np,

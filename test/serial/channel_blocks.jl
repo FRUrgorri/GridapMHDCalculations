@@ -51,7 +51,7 @@ function Run_test_channel_blocks(;
 
   out = SteadyState(mounted_insulated_channel, numbers;
           title = "channel",
-          path = "./results/tests/serial",
+          path = "./data/tests/serial",
           solver = :julia,
           convection = :newton,
           fespaces = FE_spaces,

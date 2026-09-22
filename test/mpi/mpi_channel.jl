@@ -56,7 +56,7 @@ function Run_test_channel(np::NTuple{3,Integer};  #Number of processes per multi
 
  out = SteadyState(mounted_insulated_channel, numbers;
          title = "channel",
-         path = "./results/tests/mpi",
+         path = "./data/tests/mpi",
          backend = backend,
          np = np,
          solver = :julia,
