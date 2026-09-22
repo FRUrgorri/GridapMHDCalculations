@@ -1,5 +1,3 @@
-using GridapMHDCalculations
-
 """
   SteadyState(arguments...; keyword arguments...)
 
@@ -27,27 +25,23 @@ function SteadyState(args...;
   backend::Union{Nothing,Symbol} = nothing,
   np::Union{Nothing,Integer,NTuple{3,Integer}} = nothing,
   title::String = "MHD_SS",
-#  nruns = 1,  #There is no interest a priory to repeate the same computation more than once (other than study scalability)
   path::String = ".",
   kwargs...
-)
-
-#  for ir in 1:nruns
-#    _title = title*"_r$ir"
-    if isa(backend,Nothing)
-      @assert isa(np,Nothing)
-      info, t, pp_out = _SteadyState(args...;title=title,path=path,kwargs...)
+ ) 
+  if isa(backend,Nothing)
+    @assert isa(np,Nothing)
+    info, t, pp_out = _SteadyState(args...;title=title,path=path,kwargs...)
+  else
+    @assert backend ∈ [:sequential,:mpi]
+    @assert !isa(np,Nothing)
+    if backend === :sequential
+      info, t, pp_out = _SteadyState(args...;distribute=DebugArray,rank_partition=np,title=title,path=path,kwargs...)
     else
-      @assert backend ∈ [:sequential,:mpi]
-      @assert !isa(np,Nothing)
-      if backend === :sequential
-        info, t, pp_out = _SteadyState(args...;distribute=DebugArray,rank_partition=np,title=title,path=path,kwargs...)
-      else
-        info, t, pp_out = with_mpi() do distribute
-          _SteadyState(args...;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
-        end
+      info, t, pp_out = with_mpi() do distribute
+        _SteadyState(args...;distribute=distribute,rank_partition=np,title=title,path=path,kwargs...)
       end
- #   end
+    end
+  end
 
     info[:np] = np
     info[:backend] = backend
@@ -56,9 +50,8 @@ function SteadyState(args...;
       for (k,v) in data
         info[Symbol("time_$k")] = v.max
       end
-      save(joinpath(path,"$title.bson"),info)
+      save(joinpath(path,"info","$title.bson"),info)
     end
-  end
 
   return pp_out
 end
@@ -74,19 +67,19 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
   solver::Union{Dict,Symbol} = :julia,
   verbose::Bool = true,
   mesh2vtk::Bool = false,
-#  μ = 0.0,
+ #  μ = 0.0,
   μ_BC::Real = 2.0,
   ζ::Real = 0.0,
   fespaces::Dict{Symbol, Any} = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
   post_process::Union{Nothing,Function,Vector{Function}} = nothing,
-) 
+ ) 
 
   info = Dict{Symbol,Any}()
 
   params = Dict{Symbol,Any}(
     :solve=>solve,
-#    :res_assemble=>res_assemble,
-#    :jac_assemble=>jac_assemble,
+   #    :res_assemble=>res_assemble,
+   #    :jac_assemble=>jac_assemble,
   )
 
   # Communicator
@@ -166,7 +159,7 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
     σ_Ω = σ_field(model, Ω, cw_Ha, cw_s, tw_Ha, tw_s)
     params[:solid] = Dict(:domain=>"solid", :σ=>σ_Ω)
   end
-"""
+ """
 
   #Unpack BC tags and values
   
@@ -187,7 +180,7 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
   params[:bcs] = Dict(
     :u => u_BC,
     :j => j_BC,
-#    :thin_wall=>thinWall_params, #TBD
+   #    :thin_wall=>thinWall_params, #TBD
   )
 
   if fespaces[:current_disc] == :H1
@@ -202,14 +195,14 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
     end
   end
 
-"""
-TBD: Allow a more general stabilization (at least a bit)
+ """
+ TBD: Allow a more general stabilization (at least a bit)
   # Stabilization method
   if μ > 0
     ĥ = b/nl[1]    See how the cell size is computed in GridapTritium
     params[:bcs][:stabilization] = Dict(:μ=>μ*ĥ, :domain=>"fluid")
   end
-"""
+ """
   toc!(t,"pre_process")
 
   # Solve it
@@ -243,8 +236,7 @@ TBD: Allow a more general stabilization (at least a bit)
   end
 
 
-# Info about the solution
-  info[:model] = mounted_model
+ # Info about the solution
   info[:order_u] = fespaces[:order_u]
   info[:order_j] = fespaces[:order_j]
   info[:ncells] = num_cells(model)
@@ -268,9 +260,9 @@ TBD: Allow a more general stabilization (at least a bit)
   info[:ζ] = ζ
   info[:μ_BC] = μ_BC
   
-#  info[:cw] = cw
+ #  info[:cw] = cw
   
-#  info[:μ] = μ
+ #  info[:μ] = μ
 
   return info, t, pp_out 
 end
