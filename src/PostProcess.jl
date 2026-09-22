@@ -102,6 +102,90 @@ function noSlip_check(output::output_info)
 
 end
 
+"""
+outlet_U(output::output_info)
+Computes and returns the area average value of the 3 velocity componets in the BC tagged as "outlet"
+
+"""
+
+function outlet_U(output::output_info)
+
+  cellfields = unpack_fields(output)
+  uh = Dict(cellfields)["uh"] 
+   
+  model=get_model(output.Ω)
+
+  Γ_outlet = Boundary(model;tags="outlet")
+  dΓ_outlet= Measure(Γ_outlet,output.order+1)
+  
+  return sum(∫(uh)*dΓ_outlet)/sum(∫(1.0)*dΓ_outlet)
+end
+
+"""
+outlet_J(output::output_info)
+Computes and returns the area average value of the 3 current componets in the BC tagged as "outlet"
+
+"""
+
+function outlet_J(output::output_info)
+
+  cellfields = unpack_fields(output)
+  jh = Dict(cellfields)["jh"] 
+   
+  model=get_model(output.Ω)
+
+  Γ_outlet = Boundary(model;tags="outlet")
+  dΓ_outlet= Measure(Γ_outlet,output.order+1)
+  
+  return sum(∫(jh)*dΓ_outlet)/sum(∫(1.0)*dΓ_outlet)
+end
+
+"""
+inlet_p(output::output_info)
+Computes and returns the area average value of the pressure field in the BC tagged as "inlet"
+
+"""
+
+function inlet_p(output::output_info)
+
+  cellfields = unpack_fields(output)
+  p = Dict(cellfields)["ph"] 
+   
+  model=get_model(output.Ω)
+
+  Γ_inlet = Boundary(model;tags="inlet")
+  dΓ_inlet = Measure(Γ_inlet,output.order+1)
+  
+  return sum(∫(p)*dΓ_inlet)/sum(∫(1.0)*dΓ_inlet)
+end
+
+"""
+wall_φ(output::output_info)
+Compute and returns the area average value of the electric potential difference between the walls normal to x
+
+"""
+
+function wall_φ(output::output_info)
+
+  cellfields = unpack_fields(output)
+  φ = Dict(cellfields)["phi"] 
+     
+  model=get_model(output.Ω)
+  labels = get_face_labeling(model)
+  tags_wall_1 = append!(collect(1:2), [5,6, 15, 17, 18, 25])
+  tags_wall_2 = append!(collect(3:4), [7,8, 16, 19, 20, 26])
+  add_tag_from_tags!(labels, "wall_1", tags_wall_1)
+  add_tag_from_tags!(labels, "wall_2", tags_wall_2)
+
+  Γ_wall_1 = Boundary(model;tags="wall_1")
+  dΓ_wall_1= Measure(Γ_wall_1,output.order+1)
+
+  Γ_wall_2 = Boundary(model;tags="wall_2")
+  dΓ_wall_2= Measure(Γ_wall_2,output.order+1)
+  
+  return sum(∫(φ)*dΓ_wall_1)/sum(∫(1.0)*dΓ_wall_1) - sum(∫(φ)*dΓ_wall_2)/sum(∫(1.0)*dΓ_wall_2)
+end
+
 
 #################Utilities#########################
 
