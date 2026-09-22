@@ -115,6 +115,11 @@ Function for adding the insulated tags to a Gridap channel model
 """
 
 function add_insulated_tags!(model::Union{CartesianDiscreteModel,GridapDistributed.DistributedDiscreteModel},tags::BC_tags)
+
+    # Vertex tags: [1:8]
+    # Edge tags: [9:20]
+    # Surf tags: [21:26]
+
     labels = get_face_labeling(model)
     tags_inlet = append!(collect(1:4), [9, 10, 13, 14], [21])
     tags_outlet = append!(collect(5:8), [11, 12, 15, 16], [22])
