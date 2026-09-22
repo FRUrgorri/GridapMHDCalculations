@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate "GridapMHDCalculations" #This macro activates the project meaning that it is not necessary to do add --project. I guess it increasses reproducibility...
 
 using GridapMHDCalculations
-using GridapMHDCalculations: u_parabolic, outlet_U, inlet_p, wall_φ, writeFields_vtk 
+using GridapMHDCalculations: u_parabolic, outlet_U, outlet_J, inlet_p, wall_φ, writeFields_vtk 
 using GridapMHDCalculations.models
 using GridapMHDCalculations.models: insulated_channel, channel_geom, channel_mesh
 using Gridap
@@ -56,16 +56,16 @@ function Run_channel(dict::Dict{Symbol,Any},path,title)
           solver = solver,
           convection = :newton,
           fespaces = FE_spaces,
-          post_process = [outlet_U, inlet_p, wall_φ, writeFields_vtk], 
+          post_process = [outlet_U, outlet_J, inlet_p, wall_φ, writeFields_vtk], 
           )
 
     #Build the outputs
     out_dict=Dict{Symbol,Any}(:Nxy=>dict[:Nxy],:Nz => dict[:Nz])   
-    out_dict[:Ux_out] = monitors[1][1]
-    out_dict[:Uy_out] = monitors[1][2]
     out_dict[:Uz_out] = monitors[1][3]
-    out_dict[:p_in] = monitors[2]
-    out_dict[:φ_wall] = monitors[3] 
+    out_dict[:Jx_out] = monitors[2][1]
+    out_dict[:Jy_out] = monitors[2][2]
+    out_dict[:p_in] = monitors[3]
+    out_dict[:φ_wall] = monitors[4] 
 
 
    return out_dict
@@ -74,15 +74,17 @@ end
 function Run_mesh_analysis(list::Vector{Dict{Symbol, Any}})
     for (i,d) in enumerate(list)
 
-        file = savename("Mesh",d,"bson";ignores=("Ha","Re","b","L","solver"))
-        title = savename("Mesh",d ;ignores=("Ha","Re","b","L","solver"))
-        subfolder = savename(d;ignores=("Nxy","Nz","solver","b","L"))
-        folder = savename("ins_channel",d;ignores=("Nxy","Nz","solver","Ha","Re"))
-        path = joinpath(folder,subfolder,file)
+        file = savename("Mesh",d,"bson";accesses=(:Nxy,:Nz))
+        title = savename("Mesh",d ;accesses=(:Nxy,:Nz))
+
+        subfolder = savename(d;accesses=(:Ha,:Re))
+        folder = savename("ins_channel",d;accesses=(:L,:b))
+
+        file_path = datadir("mesh_sensitivity",joinpath(folder,subfolder,file))
         vtk = datadir("mesh_sensitivity", joinpath(folder,subfolder),"vtk")
 
         out_dict = Run_channel(d,vtk,title)
-        @tagsave(datadir("mesh_sensitivity",path),out_dict)
+        @tagsave(file_path,out_dict)
     end
 end
 
