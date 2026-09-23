@@ -10,8 +10,8 @@ using SparseArrays, SparseMatricesCSR
 
 ###########Inputs########
 
-Nxy = [8,16,24,32,40]               #Crossectional cells
-Nz = [8,16]                        #Axial cells
+Nxy = [16,24,32,40]               #Crossectional cells
+Nz = [16,24]                      #Axial cells
  
 Ha = 10
 Re = 1
@@ -21,7 +21,7 @@ L = 4
 ζ = 10                                         #Augmented Lagrangian
 μ_BC = [2, 6, 10, 25, 50, 100]                 #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
 map_function = [identity,map_Roberts(b,Ha)]    #Mesh map function
-mg_levels = [2,3,4]                            #Multigrid levels
+mg_levels = [2,4]                            #Multigrid levels
 nrefs = 2                                      #Refinement level
 
 #Build the dictionaries
@@ -106,7 +106,7 @@ function Run_mg_analysis(list::Vector{Dict{Symbol, Any}},np)
     
     subfolder = savename(list[1];accesses=(:Ha,:Re))
     folder = savename("ins_channel",list[1];accesses=(:L,:b))
-    dir = datadir("channel_mg_analysis", joinpath(folder,subfolder))
+    dir = datadir("channel_mg_analysis", joinpath(folder,subfolder,"monitors"))
     done = isdir(dir) ? Set(readdir(dir)) : String[]
 
     for d in list
@@ -115,7 +115,7 @@ function Run_mg_analysis(list::Vector{Dict{Symbol, Any}},np)
         title = savename(d ;ignores=("Ha","Re","b","L"))
         
         tag_path = joinpath(dir,tag)
-        vtk_path = joinpath(dir,"vtk")     
+        vtk_path = datadir("channel_mg_analysis", joinpath(folder,subfolder,"vtk"))
 
         tag in done && continue     #Skip to the next iteration if the tag has been computed previously
 
@@ -129,4 +129,4 @@ function Run_mg_analysis(list::Vector{Dict{Symbol, Any}},np)
 end
 
 #Run the analysis
-#Run_mg_analysis(params_list)   
+Run_mg_analysis(params_list,(2,2,4))   

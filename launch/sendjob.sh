@@ -4,10 +4,10 @@
 #SBATCH -t 48:00:00
 #SBATCH -p xula4
 
-#SBATCH -o output_channel
-#SBATCH -e error_channel
+#SBATCH -o output_mgTest
+#SBATCH -e error_mgTest
 ###SBATCH --mail-user=fernando.roca@ciemat.es
-#SBATCH --job-name=channel
+#SBATCH --job-name=mgTest
 ###SBATCH --mem=0
 
 SLURM_NPROCS=`expr $SLURM_JOB_NUM_NODES \* $SLURM_NTASKS_PER_NODE`
@@ -26,12 +26,7 @@ source ../env.sh
 
 #Parallel julia execution
 
-PASS_FILE="Transfer.jl"
-
-echo "_np = (4,4,1)" >> $PASS_FILE
-echo "@assert isequal(_np[1]*_np[2]*_np[3],$SLURM_NPROCS)" >> $PASS_FILE
-
-srun julia --project=.. -O3 --check-bounds=no ./scripts/channel_Ha10Re1_H1Hdiv_direct.jl
+srun julia -O3 --check-bounds=no ../scripts/multigrid_testing.jl
 
 rm $PASS_FILE
 
