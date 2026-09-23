@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 1 
-#SBATCH --ntasks-per-node=8
-#SBATCH -t 01:00:00
+#SBATCH --ntasks-per-node=2
+#SBATCH -t 02:00:00
 #SBATCH -p xula4
 
 #SBATCH -o output_test
