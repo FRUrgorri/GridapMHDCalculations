@@ -103,19 +103,28 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
 end     
 
 function Run_mg_analysis(list::Vector{Dict{Symbol, Any}},np)
-    for (i,d) in enumerate(list)
+    
+    subfolder = savename(list[1];accesses=(:Ha,:Re))
+    folder = savename("ins_channel",list[1];accesses=(:L,:b))
+    dir = datadir("channel_mg_analysis", joinpath(folder,subfolder))
+    done = isdir(dir) ? Set(readdir(dir)) : String[]
 
-        file = savename(d,"bson";ignores=("Ha","Re","b","L"))
+    for d in list
+
+        tag = savename(d,"bson";ignores=("Ha","Re","b","L"))
         title = savename(d ;ignores=("Ha","Re","b","L"))
         
-        subfolder = savename(d;accesses=(:Ha,:Re))
-        folder = savename("ins_channel",d;accesses=(:L,:b))
+        tag_path = joinpath(dir,tag)
+        vtk_path = joinpath(dir,"vtk")     
 
-        file_path = datadir("channel_mg_analysis",joinpath(folder,subfolder,file))
-        vtk = datadir("channel_mg_analysis", joinpath(folder,subfolder),"vtk")      
+        tag in done && continue     #Skip to the next iteration if the tag has been computed previously
 
-        out_dict = Run_mg_channel(d,vtk,title,np)
-        @tagsave(file_path,out_dict)
+        try 
+            out_dict = Run_mg_channel(d,vtk_path,title,np)
+            @tagsave(tag_path,out_dict)
+        catch e
+            @warn "skipped $tag" exception=(e, catch_backtrace())
+        end
     end
 end
 

@@ -191,8 +191,9 @@ end
 
 get_model(Ω) = Ω.model
 
-get_tag_names(model::DiscreteModel)=get_face_labeling(model).tag_to_name  
-get_tag_names(model::GridapDistributed.DistributedDiscreteModel) = get_tag_names(local_views(model).items[1])
+get_tag_names(model::DiscreteModel) = get_face_labeling(model).tag_to_name  
+get_tag_names(model::GridapDistributed.DistributedDiscreteModel) = typeof(local_views(model))<:DebugArray ? get_tag_names(local_views(model).items[1]) : get_face_labeling(model).labels   
+
 
 function unpack_fields(output::output_info) 
   if length(output.xh) == 4
