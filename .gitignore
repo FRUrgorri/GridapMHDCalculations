@@ -14,9 +14,14 @@ compile/*.so
 #IDE files
 .vscode/
 .editorconfig
+*.code-workspace
 
 #Simulation logs
 
 launch/error_*
 launch/output_*
 launch/host*
+
+#Data files
+data/*
+
