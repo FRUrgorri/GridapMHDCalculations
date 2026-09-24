@@ -26,7 +26,7 @@ using FileIO
 using BSON
 
 include("types.jl")
-export Dimensionless_numbers, mounted_models
+export Dimensionless_numbers, mounted_models, FEspaces_options
 
 include("models/models.jl")
 

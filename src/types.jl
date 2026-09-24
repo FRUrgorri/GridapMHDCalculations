@@ -8,7 +8,7 @@ abstract type mounted_models end
 """
 Struct with the dimensionless numbers. The constructor checks if the numbers are consistent according to the equations: N = Ha²/Re
 
-#Fields
+ #Fields
  -`Ha`: Hartmann number
  -`Re`: Reynolds number
  -`N`: Nusselt number
@@ -42,4 +42,48 @@ function Dimensionless_numbers(; Ha=nothing, Re=nothing, N=nothing) #Method base
         throw(ArgumentError("provide two of Ha, Re, N (or all three consistently)"))
     end
     return Dimensionless_numbers(Ha, Re, N)
+end
+
+"""
+Struct with the FE spaces options. The constructor checks for only the following discretizations:
+    For fluid: :Qk_dPkm1 (u in H1 and p in L2) and :RT (u in Hdiv and p in L2)
+    For current: :H1 (φ in H1 with no j as independent variable) and :RT (j in Hdiv and φ in H1) 
+ #Note
+  GridapMHD accepts more discretizations, they could be included in this struct in future if necessary
+
+ #Fields
+ -`fluid_disc`: Symbol for the fluid discretization
+ -`current_disc`: Symbol for the current discretization
+ -`order_u`: Nusselt number
+ -`order_j`: 
+"""
+
+struct FEspaces_options
+    fluid_disc::Symbol
+    current_disc::Symbol
+    order_u::Integer
+    order_j::Integer
+    
+    function FEspaces_options(fluid_disc,current_disc,order_u,order_j) 
+        fluid_disc ∈ (:Qk_dPkm1, :RT) || throw(ArgumentError("Fluid discretization not implemented, only:Qk_dPkm1 (u in H1 and p in L2) and :RT (u in Hdiv and p in L2)"))
+        current_disc ∈ (:H1, :RT) || throw(ArgumentError("Current discretization not implemented, only:H1 (φ in H1 with no j as variable) and :RT (j in Hdiv and φ in H1)"))
+        new(fluid_disc,current_disc,order_u,order_j)
+    end
+end
+
+#Default orders
+
+FEspaces_options() = FEspaces_options(:Qk_dPkm1,:RT,2,1)
+
+function FEspaces_options(fluid_disc,current_disc)
+    if fluid_disc == :RT && current_disc == :H1
+        order_u = 1
+        order_j = 0
+    elseif fluid_disc == :Qk_dPkm1 
+        order_u = 2
+        order_j = 1
+    else
+        throw(ArgumentError("No default FE spaces orders defined for that combination of discretization. Specify the orders"))
+    end
+    FEspaces_options(fluid_disc,current_disc,order_u,order_j)
 end

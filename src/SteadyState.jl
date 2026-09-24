@@ -70,7 +70,7 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
  #  μ = 0.0,
   μ_BC::Real = 2.0,
   ζ::Real = 0.0,
-  fespaces::Dict{Symbol, Any} = Dict{Symbol,Any}(:order_u => 2, :order_j => 2, :fluid_disc => :Qk_dPkm1, :current_disc => :RT),
+  fespaces::FEspaces_options = FEspaces_options(),
   post_process::Union{Nothing,Function,Vector{Function}} = nothing,
  ) 
 
@@ -105,7 +105,15 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
   params[:solver] = solver
   
   #Fespaces parameters
-  params[:fespaces] = fespaces
+
+  (;fluid_disc,current_disc,order_u,order_j) = fespaces
+
+  params[:fespaces] = Dict{Symbol,Any}(
+    :fluid_disc => fluid_disc,
+    :current_disc => current_disc,
+    :order_u => order_u,
+    :order_j => order_j,
+  )
 
   #Unpack inputs
   (;Ha,Re,N) = numbers
@@ -183,7 +191,7 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
    #    :thin_wall=>thinWall_params, #TBD
   )
 
-  if fespaces[:current_disc] == :H1
+  if current_disc == :H1
     if isempty(tags_φ)
       params[:bcs][:φ] = Dict(:tags=>[])
       params[:fespaces][:φ_constrain] = :zeromean
@@ -237,15 +245,15 @@ function _SteadyState(mounted_model::mounted_models, numbers::Dimensionless_numb
 
 
  # Info about the solution
-  info[:order_u] = fespaces[:order_u]
-  info[:order_j] = fespaces[:order_j]
+  info[:order_u] = order_u
+  info[:order_j] = order_j
   info[:ncells] = num_cells(model)
-  info[:fluid_disc] = fespaces[:fluid_disc]
-  info[:current_disc] = fespaces[:current_disc]
+  info[:fluid_disc] = fluid_disc
+  info[:current_disc] = current_disc
   info[:ndofs] = length(get_free_dof_values(xh))
   info[:ndofs_u] = length(get_free_dof_values(xh[1]))
   info[:ndofs_p] = length(get_free_dof_values(xh[2]))
-  if fespaces[:current_disc] == :RT
+  if current_disc == :RT
     info[:ndofs_j] = length(get_free_dof_values(xh[3]))
     info[:ndofs_φ] = length(get_free_dof_values(xh[4]))
   else
