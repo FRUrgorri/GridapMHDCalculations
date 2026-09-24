@@ -45,6 +45,12 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
   #Unpack from the input dict
   @unpack Nxy_c, Nz_c, Ha, Re, b, L, ζ, μ_BC, map_function, mg_levels, nrefs = dict
 
+  println("Running $title with parameters: \n
+        Nxy_c=$(Nxy_c) | Nz_c=$(Nz_c) | mg_levels=$(mg_levels) | nrefs=$(nrefs) \n 
+        Ha=$(Ha) | Re=$(Re) | b=$(b) | L=$(L) ≠
+        ζ=$(ζ) | μ_BC=$(μ_BC) | map_function=$(map_function)"
+    )
+
   #Build geometry and mesh
   geo = channel_geom(b,L)
   mesh = channel_mesh((Nxy_c,Nxy_c,Nz_c),map_function,mg_levels,nrefs)
