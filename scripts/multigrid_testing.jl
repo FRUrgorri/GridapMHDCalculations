@@ -10,16 +10,24 @@ using SparseArrays, SparseMatricesCSR
 
 ###########Inputs########
 
-_np = (2,2,2)        #Ranks per multigrid level
-
-Nxy_c = [4,8]       #Mesh in the coarser level (always the same)
-Nz_c =  4
+#"Fixed" parameters
 Ha = 10
 Re = 1
 b = 1
 L = 4
-
 ζ = 10                                         #Augmented Lagrangian
+
+# Distribution of the parallel cases
+@assert length(ARGS) >= 3 "Please provide the ranks per multigrid level, the number of parallel cases, and the group ID as arguments"
+_np = parse.(Int, split(ARGS[1], ","))       #Ranks per multigrid level
+n_groups = parse(Int, ARGS[2])               #Parallel cases
+
+# Parametric
+# Mesh
+Nxy_c = [4,8]       #Mesh in the coarser level (always the same)
+Nz_c =  4
+
+#Multigrid parameters
 μ_BC = [2, 6, 10, 25, 50, 100]                 #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
 map_function = [identity,map_Roberts(b,Ha)]    #Mesh map function
 mg_levels = [2,4,6,8]                          #Multigrid levels
@@ -28,6 +36,7 @@ nrefs = 2                                      #Refinement level
 #Build the dictionaries
 params = @dict Nxy_c Nz_c Ha Re b L ζ μ_BC map_function mg_levels nrefs
 params_list = dict_list(params)
+
 
 #Define the functions for running the analysis
 
@@ -127,4 +136,15 @@ function Run_mg_analysis(list::Vector{Dict{Symbol, Any}},np)
 end
 
 #Run the analysis
-Run_mg_analysis(params_list,_np)   
+
+#Group the parameters for parallelization in n_groups
+group_id = isempty(ARGS[3]) ? 1 : parse(Int, ARGS[3])
+@assert 1 <= group_id <= n_groups
+
+nparams = length(params_list)
+first_id = fld((group_id - 1) * nparams, n_groups) + 1
+last_id = fld(group_id * nparams, n_groups)
+
+group_params = params_list[first_id:last_id]
+
+Run_mg_analysis(group_params,_np)   
