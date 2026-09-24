@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate "GridapMHDCalculations" #This macro activates the project meaning that it is not necessary to do add --project. I guess it increasses reproducibility...
 
 using GridapMHDCalculations
-using GridapMHDCalculations: u_parabolic, outlet_U, outlet_J, inlet_p, wall_φ, noSlip_check
+using GridapMHDCalculations: u_parabolic, outlet_U, outlet_J, inlet_p, wall_φ, noSlip_check, gradp_check
 using GridapMHDCalculations.models
 using GridapMHDCalculations.models: insulated_channel, channel_geom, channel_mesh
 using Gridap
@@ -64,7 +64,7 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
-        :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged true -ksp_converged_reason",
+        :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged false -ksp_converged_reason",
         :initial_values => Dict(
             :u => U_inlet,
             :j => VectorValue(0.0,0.0,0.0),
@@ -81,10 +81,10 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
           np = np,
           solver = solver_mg,
           fespaces = FEspaces_options(:RT,:H1),
-          post_process = [outlet_U, noSlip_check, outlet_J, inlet_p, wall_φ], 
+          post_process = [outlet_U, noSlip_check, outlet_J, inlet_p, gradp_check, wall_φ], 
     )
 
-    #Build the outputs
+    #Build the outputs and add it to the input dict
     out_dict=copy(dict) 
     out_dict[:Uz_out] = monitors[1][3]
     out_dict[:Ux_wall] = monitors[2][1]
@@ -93,7 +93,8 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
     out_dict[:Jx_out] = monitors[3][1]
     out_dict[:Jy_out] = monitors[3][2]
     out_dict[:p_in] = monitors[4]
-    out_dict[:φ_wall] = monitors[5] 
+    out_dict[:∇pz_out] = monitors[5]
+    out_dict[:φ_wall] = monitors[6] 
 
 
    return out_dict
