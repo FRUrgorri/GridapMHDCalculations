@@ -10,9 +10,10 @@ using SparseArrays, SparseMatricesCSR
 
 ###########Inputs########
 
-Nxy = [16,24,32,40]               #Crossectional cells
-Nz = [16,24]                      #Axial cells
- 
+_np = (2,2,2)        #Ranks per multigrid level
+
+Nxy_c = [4,8]       #Mesh in the coarser level (always the same)
+Nz_c =  4
 Ha = 10
 Re = 1
 b = 1
@@ -21,11 +22,11 @@ L = 4
 ζ = 10                                         #Augmented Lagrangian
 μ_BC = [2, 6, 10, 25, 50, 100]                 #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
 map_function = [identity,map_Roberts(b,Ha)]    #Mesh map function
-mg_levels = [2,4]                            #Multigrid levels
+mg_levels = [2,4,6,8]                          #Multigrid levels
 nrefs = 2                                      #Refinement level
 
 #Build the dictionaries
-params = @dict Nxy Nz Ha Re b L ζ μ_BC map_function mg_levels nrefs
+params = @dict Nxy_c Nz_c Ha Re b L ζ μ_BC map_function mg_levels nrefs
 params_list = dict_list(params)
 
 #Define the functions for running the analysis
@@ -33,11 +34,10 @@ params_list = dict_list(params)
 function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NTuple{3,Integer})
 
   #Unpack from the input dict
-  @unpack Nxy, Nz, Ha, Re, b, L, ζ, μ_BC, map_function, mg_levels, nrefs = dict
+  @unpack Nxy_c, Nz_c, Ha, Re, b, L, ζ, μ_BC, map_function, mg_levels, nrefs = dict
 
   #Build geometry and mesh
   geo = channel_geom(b,L)
-  Nxy_c, Nz_c = round.(Int,(Nxy,Nz)./(nrefs*(mg_levels-1)))  
   mesh = channel_mesh((Nxy_c,Nxy_c,Nz_c),map_function,mg_levels,nrefs)
 
   #Define the boundary fields
@@ -54,13 +54,10 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
   #Define the dimensionless numbets
   numbers = Dimensionless_numbers(;Ha=Ha,Re=Re)
 
-      #Define the FE formulation
-    FE_spaces = Dict(:order_u => 1, :fluid_disc => :RT,
-                     :order_j => 0, :current_disc => :H1
-                    )
+   
 
-    #Define multigrid solver 
-    solver_mg = Dict(
+  #Define multigrid solver 
+  solver_mg = Dict(
         :solver => :h1h1blocks,
         :niter => 6,        #This are the maximum iteration of the non-linear Newton-Raphson solver
         :niter_ls => 10,    #This is the maximum iterations of external Kirilov solver loop (FGMRES)  
@@ -73,8 +70,8 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
             :j => VectorValue(0.0,0.0,0.0),
             :p => 0.0,
             :φ => 0.0,
-            ),
-        )
+        ),
+    )
 
   #Make the simulations
   monitors = SteadyState(mounted_insulated_channel, numbers;
@@ -83,9 +80,9 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
           backend = :mpi,
           np = np,
           solver = solver_mg,
-          fespaces = FE_spaces,
+          fespaces = FEspaces_options(:RT,:H1),
           post_process = [outlet_U, noSlip_check, outlet_J, inlet_p, wall_φ], 
-          )
+    )
 
     #Build the outputs
     out_dict=copy(dict) 
@@ -129,4 +126,4 @@ function Run_mg_analysis(list::Vector{Dict{Symbol, Any}},np)
 end
 
 #Run the analysis
-Run_mg_analysis(params_list,(2,2,4))   
+Run_mg_analysis(params_list,_np)   
