@@ -48,8 +48,6 @@ function Run_test_channel(;
       ),
   )
   """
-  #Define the FE spaces parameters
-  FE_spaces=Dict(:order_u => 2, :order_j => 1, :fluid_disc => :Qk_dPkm1, :current_disc => :H1)
 
   #Call the steady state driver
 
@@ -58,7 +56,7 @@ function Run_test_channel(;
           path = "./data/tests/serial",
           solver = :julia,
           convection = :newton,
-          fespaces = FE_spaces,
+          fespaces = FEspaces_options(:Qk_dPkm1,:H1),
           post_process = [writeFields_vtk,gradp_check],
           solve = solve, 
           )

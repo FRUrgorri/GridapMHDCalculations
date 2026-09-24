@@ -7,28 +7,28 @@ function Run_test_channel_blocks(;
     nY::Integer = 6,       #Mesh cells Y direction
     nZ::Integer = 12,      #Mesh cells Z direction
     solve::Bool = true     #Solve the problem
-  )
+    )
 
-   #Define geometry and mesh
-   geo = channel_geom(b,L)
-   mesh = channel_mesh((nX,nY,nZ),map_Roberts(b,Ha))
+  #Define geometry and mesh
+  geo = channel_geom(b,L)
+  mesh = channel_mesh((nX,nY,nZ),map_Roberts(b,Ha))
  
-   #Define the boundary fields
-   U_inlet((x,y,z))=VectorValue(0.0,0.0,u_parabolic(b)(x,y))
+  #Define the boundary fields
+  U_inlet((x,y,z))=VectorValue(0.0,0.0,u_parabolic(b)(x,y))
  
-   tags = BC_tags(["inlet","walls"],["inlet","outlet","walls"])
-   values = BC_values([U_inlet])
-   bounds = BC(tags,values)
+  tags = BC_tags(["inlet","walls"],["inlet","outlet","walls"])
+  values = BC_values([U_inlet])
+  bounds = BC(tags,values)
  
-   #Define the Gridap model
+  #Define the Gridap model
  
-   mounted_insulated_channel = insulated_channel(geo, mesh, bounds)
+  mounted_insulated_channel = insulated_channel(geo, mesh, bounds)
  
-   #Define the dimensionless numbets
-   numbers = Dimensionless_numbers(;Ha=Ha,Re=Re)
+  #Define the dimensionless numbets
+  numbers = Dimensionless_numbers(;Ha=Ha,Re=Re)
   
  
- solver_blocks = Dict(
+  solver_blocks = Dict(
         :solver => :h1h1blocks,
         :niter => 1,       #This are the maximum iteration of the non-linear Newton-Raphson solver
         :niter_ls => 1,     #This is the maximum iterations of external Kirilov solver loop (FGMRES)
@@ -42,10 +42,8 @@ function Run_test_channel_blocks(;
             :p => 0.0,
             :φ => 0.0,
             ),
-        )
+  )
   
-  #Define the FE spaces parameters
-  FE_spaces=Dict(:order_u => 1, :order_j => 1, :fluid_disc => :RT, :current_disc => :H1)
 
   #Call the steady state driver
 
@@ -54,10 +52,10 @@ function Run_test_channel_blocks(;
           path = "./data/tests/serial",
           solver = :julia,
           convection = :newton,
-          fespaces = FE_spaces,
+          fespaces = FEspaces_options(:RT,:H1,1,1),
           post_process = [writeFields_vtk,gradp_check],
           solve = solve, 
-          )
+  )
 
   println("-----------------------------")
   println("Numerial pressure gradient at the outlet:")

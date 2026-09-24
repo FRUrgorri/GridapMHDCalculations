@@ -33,11 +33,6 @@ function Run_test_multigrid(;
     #Define the dimensionless numbets
     numbers = Dimensionless_numbers(;Ha=Ha,Re=Re)
 
-    #Define the FE formulation
-    FE_spaces = Dict(:order_u => 1, :fluid_disc => :RT,
-                     :order_j => 0, :current_disc => :H1
-                    )
-
     #Define multigrid solver 
     solver_multigrid = Dict(
         :solver => :h1h1blocks,
@@ -64,7 +59,7 @@ function Run_test_multigrid(;
         path = "./data/tests/serial",
         solver = solver_multigrid,
         convection = :none,
-        fespaces = FE_spaces,
+        fespaces = FEspaces_options(:RT,:H1),
         solve = solve, 
         ζ = ζ,
         μ_BC = μ_BC,

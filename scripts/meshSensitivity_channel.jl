@@ -46,16 +46,13 @@ function Run_channel(dict::Dict{Symbol,Any},path,title)
   #Define the dimensionless numbets
   numbers = Dimensionless_numbers(;Ha=Ha,Re=Re)
 
-  #Define the FE spaces parameters
-  FE_spaces=Dict(:order_u => 2, :order_j => 1, :fluid_disc => :Qk_dPkm1, :current_disc => :H1)
-
   #Make the simulations
   monitors = SteadyState(mounted_insulated_channel, numbers;
           title = title,
           path = path,
           solver = solver,
           convection = :newton,
-          fespaces = FE_spaces,
+          fespaces = FEspaces_options(:Qk_dPkm1,:H1),
           post_process = [outlet_U, outlet_J, inlet_p, wall_φ, writeFields_vtk], 
           )
 
