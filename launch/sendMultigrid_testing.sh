@@ -10,7 +10,7 @@
 
 
 SLURM_NPROCS=`expr $SLURM_JOB_NUM_NODES \* $SLURM_NTASKS_PER_NODE`
-N_GROUPS=`expr $SLURM_NPROCS \* 8` #Number of parallel cases to run (8 per process)
+N_GROUPS=`expr $SLURM_NPROCS / 8` #Number of parallel cases to run (8 per process)
 
 srun hostname -s > hosts.$SLURM_JOB_ID
 echo "================================================================"
@@ -38,7 +38,7 @@ for id in $(seq 1 "$N_GROUPS"); do
         --output="mg_group${id}_%j.out" \
         --error="mg_group${id}_%j.err" \
         julia -O3 --check-bounds=no \
-        ../scripts/multigrid_testing.jl 2,2,2 "$N_GROUPS" "$id" &
+        ../scripts/multigrid_testing.jl "2,2,2" "$N_GROUPS" "$id" &
 
     pids+=("$!")
 done

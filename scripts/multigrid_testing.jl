@@ -19,7 +19,7 @@ L = 4
 
 # Distribution of the parallel cases
 @assert length(ARGS) >= 3 "Please provide the ranks per multigrid level, the number of parallel cases, and the group ID as arguments"
-_np = parse.(Int, split(ARGS[1], ","))       #Ranks per multigrid level
+_np = Tuple{Int,Int,Int}(parse.(Int, split(ARGS[1], ",")))       #Ranks per multigrid level
 n_groups = parse(Int, ARGS[2])               #Parallel cases
 
 # Parametric
