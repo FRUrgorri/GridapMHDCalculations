@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 1 
-#SBATCH --ntasks-per-node=16
+#SBATCH --ntasks-per-node=8
 #SBATCH -t 48:00:00
 #SBATCH -p xula4
 
@@ -26,7 +26,7 @@ source ../env.sh
 
 #Parallel julia execution
 
-srun julia -O3 --check-bounds=no ../scripts/multigrid_testing.jl
+srun julia --project=.. -O3 --check-bounds=no ../scripts/multigrid_testing.jl
 
 rm $PASS_FILE
 
