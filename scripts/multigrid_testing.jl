@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate "GridapMHDCalculations" #This macro activates the project meaning that it is not necessary to do add --project. I guess it increasses reproducibility...
 
 using GridapMHDCalculations
-using GridapMHDCalculations: u_parabolic, outlet_U, outlet_J, inlet_p, wall_φ, noSlip_check, gradp_check
+using GridapMHDCalculations: u_parabolic, outlet_U, outlet_J, inlet_p, wall_φ, noSlip_check, custom_solver_postpro
 using GridapMHDCalculations.models
 using GridapMHDCalculations.models: insulated_channel, channel_geom, channel_mesh
 using Gridap
@@ -29,12 +29,12 @@ Nz_c =  4
 
 #Multigrid parameters
 μ_BC = [2, 6, 10, 25, 50, 100]                 #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
-map_function = [identity,map_Roberts(b,Ha)]    #Mesh map function
+mapFunction = [identity,map_Roberts(b,Ha)]    #Mesh map function
 mg_levels = [2,4,6,8]                          #Multigrid levels
 nrefs = 2                                      #Refinement level
 
 #Build the dictionaries
-params = @dict Nxy_c Nz_c Ha Re b L ζ μ_BC map_function mg_levels nrefs
+params = @dict Nxy_c Nz_c Ha Re b L ζ μ_BC mapFunction mg_levels nrefs
 params_list = dict_list(params)
 
 
@@ -43,17 +43,17 @@ params_list = dict_list(params)
 function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NTuple{3,Integer})
 
   #Unpack from the input dict
-  @unpack Nxy_c, Nz_c, Ha, Re, b, L, ζ, μ_BC, map_function, mg_levels, nrefs = dict
+  @unpack Nxy_c, Nz_c, Ha, Re, b, L, ζ, μ_BC, mapFunction, mg_levels, nrefs = dict
 
   println("Running $title with parameters: 
         Nxy_c=$(Nxy_c) | Nz_c=$(Nz_c) | mg_levels=$(mg_levels) | nrefs=$(nrefs) 
         Ha=$(Ha) | Re=$(Re) | b=$(b) | L=$(L) 
-        ζ=$(ζ) | μ_BC=$(μ_BC) | map_function=$(map_function)"
+        ζ=$(ζ) | μ_BC=$(μ_BC) | mapFunction=$(mapFunction)"
     )
 
   #Build geometry and mesh
   geo = channel_geom(b,L)
-  mesh = channel_mesh((Nxy_c,Nxy_c,Nz_c),map_function,mg_levels,nrefs)
+  mesh = channel_mesh((Nxy_c,Nxy_c,Nz_c),mapFunction,mg_levels,nrefs)
 
   #Define the boundary fields
   U_inlet((x,y,z))=VectorValue(0.0,0.0,u_parabolic(b)(x,y))
@@ -80,6 +80,7 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
         :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged false -ksp_converged_reason",
+        :solver_postpro => ((cache,info) -> custom_solver_postpro(cache,info)),
         :initial_values => Dict(
             :u => U_inlet,
             :j => VectorValue(0.0,0.0,0.0),
@@ -96,7 +97,9 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
           np = np,
           solver = solver_mg,
           fespaces = FEspaces_options(:RT,:H1),
-          post_process = [outlet_U, noSlip_check, outlet_J, inlet_p, gradp_check, wall_φ], 
+          ζ = ζ,
+          μ_BC = μ_BC,
+          post_process = [outlet_U, noSlip_check, outlet_J, inlet_p, wall_φ], 
     )
 
     #Build the outputs and add it to the input dict
@@ -108,8 +111,7 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
     out_dict[:Jx_out] = monitors[3][1]
     out_dict[:Jy_out] = monitors[3][2]
     out_dict[:p_in] = monitors[4]
-    out_dict[:∇pz_out] = monitors[5]
-    out_dict[:φ_wall] = monitors[6] 
+    out_dict[:φ_wall] = monitors[5] 
 
 
    return out_dict
@@ -123,8 +125,9 @@ function Run_mg_analysis(list::Vector{Dict{Symbol, Any}},np)
     done = isdir(dir) ? Set(readdir(dir)) : String[]
 
     for d in list
-
-        tag = savename(d,"bson";ignores=("Ha","Re","b","L"))
+        map_str="mapFunction="*string(nameof(d[:mapFunction]))
+        tag = savename(map_str,d,"bson";ignores=("Ha","Re","b","L"))
+    
         title = savename(d ;ignores=("Ha","Re","b","L"))
         
         tag_path = joinpath(dir,tag)
