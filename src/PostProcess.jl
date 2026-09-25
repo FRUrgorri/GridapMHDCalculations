@@ -255,3 +255,25 @@ function unpack_3fields(output::output_info)
 
   return cellfields
 end
+
+function custom_solver_postpro(cache,info)  #It is like GridapMHD.BlockSolver_postpro but saving also the non-linear iterations of the Newton-Raphson solver
+  ls = cache.ns.solver
+  log = ls.log
+
+  info[:ls1_iters] = log.num_iters
+  info[:ls1_residuals] = log.residuals[1:log.num_iters+1]
+
+  snes = cache.snes[]
+  i_petsc = Ref{PetscInt}()
+  @check_error_code GridapPETSc.PETSC.SNESGetIterationNumber(snes,i_petsc)
+  info[:nls_iters] = Int(i_petsc[])
+
+  if isa(ls.Pr.solvers[1],FGMRESSolver)
+    ls2 = ls.Pr.solvers[1]
+    log2 = ls2.log
+    info[:ls2_iters] = log2.num_iters
+    info[:ls2_residuals] = log2.residuals[1:log2.num_iters+1]
+  else
+    println("BlockSolver 1 is not FGMRESSolver, its type is $(typeof(ls.Pr.solvers[1]))")
+  end
+end
