@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -N 1 
-#SBATCH --ntasks-per-node=16
+#SBATCH --ntasks-per-node=32
 #SBATCH -t 48:00:00
 #SBATCH -p xula4
 
