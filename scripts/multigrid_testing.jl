@@ -79,8 +79,7 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
-        :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged false -ksp_converged_reason",
-        :solver_postpro => ((cache,info) -> custom_solver_postpro(cache,info)),
+        :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged true -ksp_converged_reason",
         :initial_values => Dict(
             :u => U_inlet,
             :j => VectorValue(0.0,0.0,0.0),
@@ -126,9 +125,9 @@ function Run_mg_analysis(list::Vector{Dict{Symbol, Any}},np)
 
     for d in list
         map_str="mapFunction="*string(nameof(d[:mapFunction]))
-        tag = savename(map_str,d,"bson";ignores=("Ha","Re","b","L"))
+        tag = savename(map_str, d,"bson";ignores=("Ha","Re","b","L"))
     
-        title = savename(d ;ignores=("Ha","Re","b","L"))
+        title = savename(map_str, d ;ignores=("Ha","Re","b","L"))
         
         tag_path = joinpath(dir,tag)
         vtk_path = datadir("channel_mg_analysis", joinpath(folder,subfolder,"vtk"))
