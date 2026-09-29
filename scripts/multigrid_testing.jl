@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate "GridapMHDCalculations" #This macro activates the project meaning that it is not necessary to do add --project. I guess it increasses reproducibility...
 
 using GridapMHDCalculations
-using GridapMHDCalculations: u_parabolic, outlet_U, outlet_J, inlet_p, wall_φ, noSlip_check, custom_solver_postpro
+using GridapMHDCalculations: u_parabolic, outlet_U, outlet_J, inlet_p, wall_φ, noSlip_check
 using GridapMHDCalculations.models
 using GridapMHDCalculations.models: insulated_channel, channel_geom, channel_mesh
 using Gridap
