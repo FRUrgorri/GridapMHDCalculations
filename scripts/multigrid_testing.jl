@@ -28,9 +28,9 @@ Nxy_c = [4,8]       #Mesh in the coarser level (always the same)
 Nz_c =  4
 
 #Multigrid parameters
-μ_BC = [2, 6, 10, 25, 50, 100]                 #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
+μ_BC = [2, 6, 10, 25, 50]                 #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
 mapFunction = [identity,map_Roberts(b,Ha)]    #Mesh map function
-mg_levels = [2,4,6,8]                          #Multigrid levels
+mg_levels = [2,3]                          #Multigrid levels
 nrefs = 2                                      #Refinement level
 
 #Build the dictionaries
