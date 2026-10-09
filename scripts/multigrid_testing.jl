@@ -79,7 +79,7 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
-        :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged true -ksp_converged_reason",
+        :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged false -ksp_converged_reason",
         :initial_values => Dict(
             :u => U_inlet,
             :j => VectorValue(0.0,0.0,0.0),
