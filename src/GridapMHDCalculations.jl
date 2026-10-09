@@ -39,6 +39,9 @@ export exec_post_process, output_info
 
 include("utils.jl")
 
+#Plots
+include("plots/plots.jl")
+
 #Tests
 include("../test/serial/serialTest.jl")
 include("../test/mpi/mpiTest.jl")
