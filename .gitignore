@@ -25,3 +25,5 @@ launch/host*
 #Data files
 data/*
 
+#Plots
+plots/figures/*
