@@ -93,7 +93,7 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
           fespaces = FEspaces_options(:RT,:H1),
           ζ = ζ,
           μ_BC = μ_BC,
-          post_process = [writeFields_vtk], 
+          post_process = writeFields_vtk, 
     )
   
 
