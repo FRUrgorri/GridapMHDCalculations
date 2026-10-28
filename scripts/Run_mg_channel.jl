@@ -1,5 +1,5 @@
 using DrWatson
-@quickactivate "GridapMHDCalculations" #This macro activates the project meaning that it is not necessary to do add --project. I guess it increasses reproducibility...
+@quickactivate "GridapMHDCalculations" 
 
 using GridapMHDCalculations
 using GridapMHDCalculations: writeFields_vtk
@@ -22,13 +22,13 @@ L = 4
 _np = Tuple{Int,Int,Int}(parse.(Int, split(ARGS[1], ",")))       #Ranks per multigrid level
 
 # Coarse mesh
-Nxy_c = 8       #Mesh in the coarser level (always the same)
+Nxy_c = 12       #Mesh in the coarser level (always the same)
 Nz_c =  4
 
 #Multigrid parameters
-μ_BC = [25,50,75,100]                            #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
+μ_BC = 1000 	  	                       #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
 mapFunction = map_Roberts(b,Ha)                #Mesh map function
-mg_levels = 4                                  #Multigrid levels
+mg_levels = 3                                  #Multigrid levels
 nrefs = 2                                      #Refinement level
 
 #Build the dictionaries
@@ -74,7 +74,7 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
-        :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged false -ksp_converged_reason",
+        :petsc_options  => "-ksp_monitor -ksp_error_if_not_converged true -ksp_converged_reason",
         :initial_values => Dict(
             :u => U_inlet,
             :j => VectorValue(0.0,0.0,0.0),
