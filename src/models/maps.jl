@@ -1,11 +1,7 @@
 """
   Mesh streching according to the Roberts formula described in S. Smolentsev et al. (2005) 10.1016/j.fusengdes.2005.01.003
 """
-function stretchMHD(coord::VectorValue;
-                    domain::Tuple{Real,Real,Real,Real,Real,Real}=(0.0,1.0,0.0,1.0,0.0,1.0),
-                    factor::Tuple{Real,Real,Real}=(1.0,1.0,1.0),
-                    dirs::Tuple{Int,Int,Int}=(1,2,3)
-  )
+function stretchMHD(coord;domain=(0.0,1.0,0.0,1.0,0.0,1.0),factor=(1.0,1.0,1.0),dirs=(1,2,3))
   ncoord = collect(coord.data)
   for (i,dir) in enumerate(dirs)
     ξ0 = domain[i*2-1]
@@ -47,7 +43,7 @@ See strechMHD function for detailed formula
 function map_Roberts(b::Real,Ha::Real;γ_Ha::Real=1.0, γ_side::Real=0.5)
      
      stretch_Ha = sqrt(Ha^γ_Ha/(Ha^γ_Ha-1))
-     stretch_side = sqrt(sqrt(Ha^γ_side)/(sqrt(Ha^γ_side)-1))
+     stretch_side = sqrt(Ha^γ_side/(Ha^γ_side-1))
      
      function (coord)
        ncoord = stretchMHD(coord,domain=(0,-b,0,-1.0),factor=(stretch_side,stretch_Ha),dirs=(1,2))
