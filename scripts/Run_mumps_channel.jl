@@ -1,11 +1,12 @@
 using DrWatson
-@quickactivate "GridapMHDCalculations" #This macro activates the project meaning that it is not necessary to do add --project. I guess it increasses reproducibility...
+@quickactivate "GridapMHDCalculations" 
 
 using GridapMHDCalculations
-using GridapMHDCalculations: writeFields_vtk
+using GridapMHDCalculations: writeFields_vtk, u_parabolic
 using GridapMHDCalculations.models
 using GridapMHDCalculations.models: insulated_channel, channel_geom, channel_mesh
 using Gridap
+using GridapPETSc
 using SparseArrays, SparseMatricesCSR
 
 ###########Inputs########
@@ -21,7 +22,7 @@ L = 4
 _np = Tuple{Int,Int,Int}(parse.(Int, split(ARGS[1], ",")))       #Ranks per multigrid level
 
 # Mesh
-Nxy = 20       
+Nxy = 30       
 Nz =  16
 mapFunction = map_Roberts(b,Ha)        
 
@@ -32,11 +33,10 @@ params_list = dict_list(params)
 function Run_mumps_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NTuple{3,Integer})
 
   #Unpack from the input dict
-  @unpack Nxy_c, Nz_c, Ha, Re, b, L, mapFunction = dict
+  @unpack Nxy, Nz, Ha, Re, b, L, mapFunction = dict
 
   println("Running $title with parameters: 
-        Nxy_c=$(Nxy_c) | Nz_c=$(Nz_c) | mg_levels=$(mg_levels) | nrefs=$(nrefs) 
-        Ha=$(Ha) | Re=$(Re) | b=$(b) | L=$(L) | mapFunction=$(mapFunction)"
+        Nxy=$(Nxy) | Nz=$(Nz) | Ha=$(Ha) | Re=$(Re) | b=$(b) | L=$(L) | mapFunction=$(mapFunction)"
     )
 
   #Build geometry and mesh
