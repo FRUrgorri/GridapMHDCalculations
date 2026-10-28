@@ -58,6 +58,7 @@ function plot_Uz_profile(
     files::Vector{String},
     side::String;
     central_points_only::Bool=false,
+    labels::Vector{String}=["" for _ in 1:length(files)],
 )
     isempty(files) && throw(ArgumentError("At least one profile file is required"))
 
@@ -68,25 +69,22 @@ function plot_Uz_profile(
 
     p = plot(xlabel=xlabel, ylabel="Uz", legend=:bottom)
 
-    for (file, (position, uz)) in zip(
-        files,
+    for ((i,), (position, uz)) in zip(
+        enumerate(files),
         read_profile_columns(files, header, "uh:2"),
     )
-        filename = basename(file)
-        label_match = match(r"Nxy_c=.*?mg_levels=\d+", filename)
-        label_match === nothing &&
-            throw(ArgumentError("Could not extract Nxy_c through mg_levels from filename: $filename"))
+
         if central_points_only
             central_indices = _central_step_indices(position, uz)
             plot!(
                 p,
                 position[central_indices],
                 uz[central_indices];
-                label=label_match.match,
+                label=labels[i],
                 linewidth=1.5
             )
         else
-            plot!(p, position, uz; label=label_match.match, linewidth=1.5)
+            plot!(p, position, uz; label=labels[i], linewidth=1.5)
         end
     end
 
