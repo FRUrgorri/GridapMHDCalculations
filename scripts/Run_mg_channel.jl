@@ -7,6 +7,9 @@ using GridapMHDCalculations.models
 using GridapMHDCalculations.models: insulated_channel, channel_geom, channel_mesh
 using Gridap
 using SparseArrays, SparseMatricesCSR
+using MPI
+
+
 
 ###########Inputs########
 
@@ -39,12 +42,15 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
 
   #Unpack from the input dict
   @unpack Nxy_c, Nz_c, Ha, Re, b, L, ζ, μ_BC, mapFunction, mg_levels, nrefs = dict
-
-  println("Running $title with parameters: 
-        Nxy_c=$(Nxy_c) | Nz_c=$(Nz_c) | mg_levels=$(mg_levels) | nrefs=$(nrefs) 
-        Ha=$(Ha) | Re=$(Re) | b=$(b) | L=$(L) 
-        ζ=$(ζ) | μ_BC=$(μ_BC) | mapFunction=$(mapFunction)"
-    )
+  
+  MPI.Init()
+  if MPI.Comm_rank(MPI.COMM_WORLD) == 0
+    println("Running $title with parameters: 
+          Nxy_c=$(Nxy_c) | Nz_c=$(Nz_c) | mg_levels=$(mg_levels) | nrefs=$(nrefs) 
+          Ha=$(Ha) | Re=$(Re) | b=$(b) | L=$(L) 
+          ζ=$(ζ) | μ_BC=$(μ_BC) | mapFunction=$(mapFunction)"
+      )
+  end
 
   #Build geometry and mesh
   geo = channel_geom(b,L)
