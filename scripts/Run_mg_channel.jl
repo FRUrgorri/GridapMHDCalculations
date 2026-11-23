@@ -28,6 +28,10 @@ _np = Tuple{Int,Int,Int}(parse.(Int, split(ARGS[1], ",")))       #Ranks per mult
 Nxy_c = 12       #Mesh in the coarser level (always the same)
 Nz_c =  6
 
+#FEM orders
+u_order = 2
+j_order = 0     #Phi order in H1 is j_order+1
+
 #Multigrid parameters
 μ_BC = 25
 
@@ -37,20 +41,21 @@ mg_levels = 3                                  #Multigrid levels
 nrefs = 2                                      #Refinement level
 
 #Build the dictionaries
-params = @dict Nxy_c Nz_c Ha Re b L ζ μ_BC mapFunction mg_levels nrefs
+params = @dict Nxy_c Nz_c Ha Re b L ζ μ_BC mapFunction mg_levels nrefs u_order j_order
 params_list = dict_list(params)
 
 function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NTuple{3,Integer})
 
   #Unpack from the input dict
-  @unpack Nxy_c, Nz_c, Ha, Re, b, L, ζ, μ_BC, mapFunction, mg_levels, nrefs = dict
+  @unpack Nxy_c, Nz_c, Ha, Re, b, L, ζ, μ_BC, mapFunction, mg_levels, nrefs, u_order, j_order = dict
   
   MPI.Init()
   if MPI.Comm_rank(MPI.COMM_WORLD) == 0
     println("Running $title with parameters: 
           Nxy_c=$(Nxy_c) | Nz_c=$(Nz_c) | mg_levels=$(mg_levels) | nrefs=$(nrefs) 
           Ha=$(Ha) | Re=$(Re) | b=$(b) | L=$(L) 
-          ζ=$(ζ) | μ_BC=$(μ_BC) | mapFunction=$(mapFunction)"
+          ζ=$(ζ) | μ_BC=$(μ_BC) | mapFunction=$(mapFunction)
+          u_order=$(u_order) | j_order=$(j_order)"
       )
   end
 
@@ -72,7 +77,8 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
   #Define the dimensionless numbets
   numbers = Dimensionless_numbers(;Ha=Ha,Re=Re)
 
-   
+  # FE spaces options
+  fespaces = FEspaces_options(:RT,:H1,u_order,j_order)
 
   #Define multigrid solver 
   solver_mg = Dict(
@@ -98,9 +104,9 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
           backend = :mpi,
           np = np,
           solver = solver_mg,
-          fespaces = FEspaces_options(:RT,:H1),
+          fespaces = fespaces,
           convection = :newton,
-	  ζ = ζ,
+	      ζ = ζ,
           μ_BC = μ_BC,
           post_process = writeFields_vtk, 
     )
