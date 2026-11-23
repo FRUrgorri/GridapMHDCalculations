@@ -2,7 +2,7 @@ using DrWatson
 @quickactivate "GridapMHDCalculations" 
 
 using GridapMHDCalculations
-using GridapMHDCalculations: writeFields_vtk
+using GridapMHDCalculations: writeFields_vtk, u_parabolic
 using GridapMHDCalculations.models
 using GridapMHDCalculations.models: insulated_channel, channel_geom, channel_mesh
 using Gridap
@@ -26,10 +26,12 @@ _np = Tuple{Int,Int,Int}(parse.(Int, split(ARGS[1], ",")))       #Ranks per mult
 
 # Coarse mesh
 Nxy_c = 12       #Mesh in the coarser level (always the same)
-Nz_c =  4
+Nz_c =  6
 
 #Multigrid parameters
-μ_BC = 1000 	  	                       #Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
+μ_BC = 25
+
+#Penalty parameter for the no_slip BC in the HdivH1 and HdivHdiv formulation 
 mapFunction = map_Roberts(b,Ha)                #Mesh map function
 mg_levels = 3                                  #Multigrid levels
 nrefs = 2                                      #Refinement level
@@ -97,7 +99,8 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
           np = np,
           solver = solver_mg,
           fespaces = FEspaces_options(:RT,:H1),
-          ζ = ζ,
+          convection = :newton,
+	  ζ = ζ,
           μ_BC = μ_BC,
           post_process = writeFields_vtk, 
     )
