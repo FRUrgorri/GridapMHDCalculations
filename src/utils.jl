@@ -64,3 +64,10 @@ function kp_tillac(b::Real,Ha::Real,cw_s::Real,cw_Ha::Real)
   return 1/(k_s+k_Ha)
 end
  
+
+# Model information utilities
+get_model(Ω) = Ω.model
+
+get_tag_names(model::DiscreteModel) = get_face_labeling(model).tag_to_name  
+get_tag_names(model::GridapDistributed.DistributedDiscreteModel) = typeof(local_views(model))<:DebugArray ? get_tag_names(local_views(model).items[1]) : get_tag_names(local_views(model).item)
+
