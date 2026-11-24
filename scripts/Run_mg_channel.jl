@@ -85,6 +85,7 @@ function Run_mg_channel(dict::Dict{Symbol,Any},path::String,title::String,np::NT
         :solver => :h1h1blocks,
         :niter => 8,        #This are the maximum iteration of the non-linear Newton-Raphson solver
         :niter_ls => 30,    #This is the maximum iterations of external Kirilov solver loop (FGMRES)  
+        :gmg_maxiter => 3,  #This is the maximum multigrid iterations (default is 1)
         :matrix_type    => SparseMatrixCSC{Float64,Int},
         :vector_type    => Vector{Float64},
         :block_solvers  => [:gmg, :petsc_cg_jacobi, :petsc_gmres_amg],
