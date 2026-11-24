@@ -38,6 +38,7 @@ include("PostProcess.jl")
 export exec_post_process, output_info
 
 include("utils.jl")
+export get_model, get_tag_names
 
 #Plots
 include("plots/plots.jl")
